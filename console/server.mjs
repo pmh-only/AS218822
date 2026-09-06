@@ -60,9 +60,10 @@ async function loadStatus() {
   };
   const entries = await Promise.all(Object.entries(queries).map(async ([key, query]) => [key, await prometheus("/api/v1/query", { query })]));
   const result = Object.fromEntries(entries);
-  const [upHistory, totalHistory] = await Promise.all([
+  const [upHistory, totalHistory, trafficHistory] = await Promise.all([
     prometheus("/api/v1/query_range", { query: 'sum(as218822_protocol_up{type="BGP"})', start: String(now - 21_600), end: String(now), step: "300" }),
     prometheus("/api/v1/query_range", { query: 'count(as218822_protocol_up{type="BGP"})', start: String(now - 21_600), end: String(now), step: "300" }),
+    prometheus("/api/v1/query_range", { query: 'sum by (direction) (label_replace(rate(tailscaled_inbound_bytes_total{job="as218822-tailscale"}[5m]), "direction", "in", "", "") or label_replace(rate(tailscaled_outbound_bytes_total{job="as218822-tailscale"}[5m]), "direction", "out", "", ""))', start: String(now - 21_600), end: String(now), step: "300" }),
   ]);
 
   const protocols = result.protocols.map((item) => ({
@@ -89,6 +90,8 @@ async function loadStatus() {
     up: historyUp.get(timestamp) ?? 0,
     total: Number(value),
   }));
+  const trafficSeries = new Map(trafficHistory.map((series) => [series.metric.direction, new Map(series.values.map(([timestamp, value]) => [timestamp, Number(value)]))]));
+  const trafficTimestamps = [...new Set(trafficHistory.flatMap((series) => series.values.map(([timestamp]) => timestamp)))].sort((a, b) => a - b);
 
   return {
     generatedAt: new Date().toISOString(),
@@ -112,6 +115,11 @@ async function loadStatus() {
       protocol: item.metric.protocol,
     })),
     traffic: result.traffic.map((item) => ({ pod: item.metric.pod, direction: item.metric.direction, bytesPerSecond: sample(item) })),
+    trafficHistory: trafficTimestamps.map((timestamp) => ({
+      timestamp: new Date(Number(timestamp) * 1_000).toISOString(),
+      in: trafficSeries.get("in")?.get(timestamp) ?? 0,
+      out: trafficSeries.get("out")?.get(timestamp) ?? 0,
+    })),
     history,
   };
 }

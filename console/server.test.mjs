@@ -9,8 +9,15 @@ function prometheusResponse(url) {
   const now = Date.now() / 1_000;
   let result;
   if (url.pathname.endsWith("query_range")) {
-    const values = query.startsWith("sum(") ? [[now - 300, "2"], [now, "1"]] : [[now - 300, "2"], [now, "2"]];
-    result = [{ metric: {}, values }];
+    if (query.startsWith("sum by (direction)")) {
+      result = [
+        { metric: { direction: "in" }, values: [[now - 300, "2048"], [now, "4096"]] },
+        { metric: { direction: "out" }, values: [[now - 300, "1024"], [now, "2048"]] },
+      ];
+    } else {
+      const values = query.startsWith("sum(") ? [[now - 300, "2"], [now, "1"]] : [[now - 300, "2"], [now, "2"]];
+      result = [{ metric: {}, values }];
+    }
   } else if (query === "as218822_protocol_up") {
     result = [
       { metric: { protocol: "transit_a", type: "BGP", location: "core" }, value: [now, "1"] },
@@ -88,6 +95,10 @@ test("serves constrained live monitoring data", async (context) => {
   });
   assert.equal(body.protocols.length, 3);
   assert.equal(body.history.length, 2);
+  assert.deepEqual(body.trafficHistory.map(({ in: inbound, out }) => ({ inbound, out })), [
+    { inbound: 2048, out: 1024 },
+    { inbound: 4096, out: 2048 },
+  ]);
   assert.equal(body.alerts[0].protocol, "transit_b");
 
   const arbitrary = await fetch(`http://127.0.0.1:${consolePort}/api/query?query=up`);

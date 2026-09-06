@@ -10,232 +10,255 @@ import "@fontsource/ibm-plex-mono/600.css";
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width" />
     <meta name="description" content="Live AS218822 network monitoring console" />
-    <meta name="theme-color" content="#080a0d" />
+    <meta name="theme-color" content="#07090c" />
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 fill=%22%237149dd%22/><text x=%2250%22 y=%2267%22 text-anchor=%22middle%22 font-size=%2245%22 font-family=%22monospace%22 fill=%22white%22>AS</text></svg>" />
     <title>AS218822 / Live Console</title>
     <style is:global>
+      :root { --bg: #07090c; --panel: #0d1116; --line: #242b33; --muted: #88939d; --text: #e7ebee; --violet: #9470ef; --violet-dim: #5d439d; --green: #45cf91; --red: #e15e68; --amber: #e6ad55; }
       * { box-sizing: border-box; }
-      html { background: #080a0d; scroll-behavior: smooth; scrollbar-color: #3b444d #080a0d; }
-      body { min-width: 20rem; min-height: 100vh; margin: 0; background: radial-gradient(circle at 77% 0%, rgb(109 72 210 / 13%), transparent 32rem), #080a0d; color: #dce3e9; font-family: "IBM Plex Mono", monospace; -webkit-font-smoothing: antialiased; }
+      html { background: var(--bg); scroll-behavior: smooth; scrollbar-color: #3a444e var(--bg); }
+      body { min-width: 20rem; min-height: 100vh; margin: 0; background: radial-gradient(circle at 80% -10%, rgb(112 71 218 / 16%), transparent 35rem), var(--bg); color: var(--text); font-family: "IBM Plex Mono", monospace; -webkit-font-smoothing: antialiased; }
       button { font: inherit; }
       button, a { -webkit-tap-highlight-color: transparent; }
-      :focus-visible { outline: 2px solid #a98cf2; outline-offset: 3px; }
-      ::selection { background: #7150d2; color: white; }
-      .skip-link { position: fixed; z-index: 10; top: 0.8rem; left: 0.8rem; padding: 0.7rem 0.9rem; background: #f0f2f4; color: #080a0d; font-size: 0.75rem; font-weight: 600; transform: translateY(-200%); }
+      :focus-visible { outline: 2px solid #b497fa; outline-offset: 3px; }
+      ::selection { background: #7149dd; color: white; }
+      .skip-link { position: fixed; z-index: 10; top: 0.75rem; left: 0.75rem; padding: 0.7rem; background: white; color: var(--bg); font-size: 0.7rem; transform: translateY(-200%); }
       .skip-link:focus { transform: translateY(0); }
-      .shell { display: grid; grid-template-columns: 14rem minmax(0, 1fr); min-height: 100vh; }
-      aside { position: sticky; top: 0; display: flex; flex-direction: column; height: 100vh; padding: 1.4rem; border-right: 1px solid #252b31; background: rgb(7 9 12 / 90%); backdrop-filter: blur(16px); }
-      .brand { display: flex; align-items: center; gap: 0.75rem; color: #f1f3f5; font-size: 0.8rem; font-weight: 600; }
-      .brand-mark { display: grid; width: 2.25rem; height: 2.25rem; place-items: center; background: #7149dd; color: white; font-size: 0.65rem; }
-      .brand small { display: block; margin-top: 0.14rem; color: #89939c; font-size: 0.6875rem; font-weight: 400; letter-spacing: 0.08em; text-transform: uppercase; }
-      nav { display: grid; gap: 0.3rem; margin-top: 3.5rem; }
-      nav a { display: flex; min-height: 2.75rem; align-items: center; padding: 0.7rem; border-left: 1px solid transparent; color: #89939c; font-size: 0.6875rem; text-decoration: none; text-transform: uppercase; transition: border-color 160ms ease-out, background-color 160ms ease-out, color 160ms ease-out; }
-      nav a:hover { border-color: #4b3c71; background: rgb(113 73 221 / 8%); color: #d6ccef; }
-      nav a:first-child { border-color: #8d70db; background: linear-gradient(90deg, rgb(113 73 221 / 15%), transparent); color: #e0d8f6; }
-      .connection { margin-top: auto; color: #89939c; font-size: 0.6875rem; line-height: 1.7; text-transform: uppercase; }
-      .connection strong { display: flex; align-items: center; gap: 0.45rem; color: #cbd2d8; font-weight: 500; }
-      .connection i, .live-dot { width: 0.4rem; height: 0.4rem; border-radius: 50%; background: #767e86; }
-      .connection i.online, .live-dot.online { background: #48c58a; }
-      main { width: 100%; max-width: 104rem; min-width: 0; margin-inline: auto; padding: clamp(1.3rem, 3.5vw, 3.5rem); }
-      header { display: flex; justify-content: space-between; gap: 2rem; align-items: end; padding-bottom: 1.8rem; border-bottom: 1px solid #252b31; }
-      h1 { max-width: 10ch; margin: 0; color: #f0f2f4; font-size: clamp(2.25rem, 4.5vw, 4.2rem); font-weight: 500; letter-spacing: -0.04em; line-height: 0.92; text-wrap: balance; }
-      .refresh { display: flex; min-height: 2.75rem; align-items: center; gap: 0.65rem; padding: 0.7rem 0.85rem; border: 1px solid #3b444d; background: #101419; color: #b4bdc5; cursor: pointer; font-size: 0.6875rem; text-transform: uppercase; transition: border-color 160ms ease-out, background-color 160ms ease-out, color 160ms ease-out; }
-      .refresh svg { width: 0.9rem; height: 0.9rem; }
-      .refresh:hover { border-color: #8065c7; background: #15131d; color: white; }
+      .shell { display: grid; grid-template-columns: 12rem minmax(0, 1fr); min-height: 100vh; }
+      aside { position: sticky; top: 0; display: flex; flex-direction: column; height: 100vh; padding: 1.3rem 1rem; border-right: 1px solid var(--line); background: rgb(6 8 11 / 94%); }
+      .brand { display: flex; align-items: center; gap: 0.7rem; color: #f4f5f6; font-size: 0.76rem; font-weight: 600; }
+      .brand-mark { display: grid; width: 2rem; height: 2rem; place-items: center; background: #7149dd; font-size: 0.6rem; }
+      .brand small { display: block; margin-top: 0.12rem; color: var(--muted); font-size: 0.58rem; font-weight: 400; letter-spacing: 0.08em; text-transform: uppercase; }
+      nav { display: grid; gap: 0.2rem; margin-top: 3rem; }
+      nav a { display: flex; min-height: 2.5rem; align-items: center; padding: 0.65rem; border-left: 1px solid transparent; color: var(--muted); font-size: 0.62rem; text-decoration: none; text-transform: uppercase; transition: 150ms ease-out; }
+      nav a:hover, nav a:first-child { border-color: var(--violet); background: linear-gradient(90deg, rgb(148 112 239 / 13%), transparent); color: #ded4f8; }
+      .connection { margin-top: auto; color: var(--muted); font-size: 0.6rem; line-height: 1.8; text-transform: uppercase; }
+      .connection strong { display: flex; align-items: center; gap: 0.45rem; color: #cbd2d7; font-weight: 500; }
+      .dot { width: 0.4rem; height: 0.4rem; border-radius: 50%; background: #69727a; }
+      .dot.online, .status-dot.up { background: var(--green); }
+      main { width: 100%; max-width: 110rem; min-width: 0; margin-inline: auto; padding: clamp(1rem, 2.4vw, 2.4rem); }
+      .topbar { display: flex; justify-content: space-between; gap: 2rem; align-items: end; padding-bottom: 1.1rem; border-bottom: 1px solid var(--line); }
+      .title-group { display: flex; gap: 1.5rem; align-items: baseline; }
+      h1 { margin: 0; color: #f3f5f6; font-size: clamp(1.7rem, 3vw, 2.8rem); font-weight: 500; letter-spacing: -0.04em; line-height: 1; }
+      .title-group p { margin: 0; color: var(--muted); font-size: 0.65rem; text-transform: uppercase; }
+      .refresh { display: flex; min-height: 2.6rem; align-items: center; gap: 0.6rem; padding: 0.65rem 0.8rem; border: 1px solid #3a444e; background: #10151a; color: #b8c0c6; cursor: pointer; font-size: 0.62rem; text-transform: uppercase; }
+      .refresh svg { width: 0.85rem; height: 0.85rem; }
+      .refresh:hover { border-color: var(--violet); color: white; }
       .refresh:disabled { cursor: wait; opacity: 0.65; }
       .refresh:disabled svg { animation: rotate 900ms linear infinite; }
-      .summary { display: grid; grid-template-columns: repeat(6, 1fr); border-bottom: 1px solid #252b31; }
-      .metric { min-width: 0; padding: 1.35rem 1rem 1.35rem 0; }
-      .metric + .metric { padding-left: 1.2rem; border-left: 1px solid #252b31; }
-      .metric span { color: #89939c; font-size: 0.6875rem; letter-spacing: 0.06em; text-transform: uppercase; }
-      .metric strong { display: block; margin-top: 0.65rem; color: #e9edef; font-size: clamp(1.3rem, 2.2vw, 1.75rem); font-variant-numeric: tabular-nums; font-weight: 400; letter-spacing: -0.03em; }
-      .metric strong.warn { color: #e3a84f; }
-      .dashboard { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(19rem, 0.6fr); gap: 0.9rem; padding-top: 0.9rem; }
-      .panel { min-width: 0; border: 1px solid #252b31; background: rgb(13 16 20 / 78%); }
-      .panel-head { display: flex; justify-content: space-between; align-items: center; min-height: 2.9rem; padding: 0 0.9rem; border-bottom: 1px solid #252b31; }
-      .panel-head h2 { margin: 0; color: #c7ced4; font-size: 0.7rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; }
-      .panel-head span { color: #89939c; font-size: 0.6875rem; line-height: 1.4; text-align: right; text-transform: uppercase; }
-      .chart-panel { grid-column: 1 / -1; }
-      .chart-wrap { position: relative; height: 12rem; padding: 1rem; }
-      #history-chart { width: 100%; height: 100%; overflow: visible; }
-      .chart-grid { stroke: #272e35; stroke-width: 1; }
-      .chart-area { fill: url(#area); }
-      .chart-line { fill: none; stroke: #8866df; stroke-width: 2; vector-effect: non-scaling-stroke; }
-      .chart-empty { display: grid; height: 100%; place-items: center; color: #89939c; font-size: 0.7rem; text-align: center; }
-      .chart-detail { display: flex; justify-content: space-between; gap: 1rem; padding: 0 1rem 0.9rem; color: #89939c; font-size: 0.65rem; font-variant-numeric: tabular-nums; text-transform: uppercase; }
-      .chart-detail strong { color: #b9a6ea; font-weight: 500; }
-      .protocols { display: grid; grid-template-columns: repeat(2, 1fr); }
-      .protocol { display: grid; grid-template-columns: 0.65rem minmax(0, 1fr) auto; gap: 0.65rem; align-items: center; min-width: 0; padding: 0.85rem 0.9rem; border-bottom: 1px solid #22282e; }
-      .protocol:nth-child(odd) { border-right: 1px solid #22282e; }
-      .protocol i, .state-dot { width: 0.38rem; height: 0.38rem; border-radius: 50%; background: #d75561; }
-      .protocol.up i, .state-dot.up { background: #41b980; }
-      .protocol strong { display: block; overflow: hidden; color: #d8dde1; font-size: 0.72rem; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
-      .protocol small { display: block; margin-top: 0.2rem; overflow: hidden; color: #87919a; font-size: 0.6875rem; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
-      .protocol em { color: #939da5; font-size: 0.6875rem; font-style: normal; text-transform: uppercase; }
-      .stack { display: grid; gap: 0.9rem; align-content: start; }
-      .states { display: grid; }
-      .state { display: grid; grid-template-columns: 0.65rem minmax(0, 1fr) auto; gap: 0.65rem; align-items: center; padding: 0.8rem 0.9rem; border-bottom: 1px solid #22282e; }
-      .state:last-child { border-bottom: 0; }
-      .state strong { display: block; overflow: hidden; color: #d4dade; font-size: 0.7rem; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
-      .state small { display: block; overflow: hidden; margin-top: 0.2rem; color: #87919a; font-size: 0.6875rem; text-overflow: ellipsis; white-space: nowrap; }
-      .state b { color: #939da5; font-size: 0.6875rem; font-weight: 400; text-transform: uppercase; }
-      .alerts-empty { padding: 1.3rem 0.9rem; color: #89939c; font-size: 0.68rem; line-height: 1.5; }
-      .alert { padding: 0.85rem 0.9rem; border-left: 1px solid #d69a42; border-bottom: 1px solid #22282e; background: rgb(214 154 66 / 5%); }
-      .alert:last-child { border-bottom: 0; }
-      .alert strong { display: block; color: #e5bf84; font-size: 0.7rem; font-weight: 500; }
-      .alert small { display: block; margin-top: 0.3rem; color: #bca37d; font-size: 0.6875rem; }
-      .error-banner { display: none; margin-top: 0.9rem; padding: 0.9rem; border: 1px solid #79353b; background: #211114; color: #f1a5ab; font-size: 0.7rem; line-height: 1.55; }
+      .error-banner { display: none; margin-top: 0.75rem; padding: 0.8rem; border: 1px solid #7d363d; background: #211114; color: #f2a5ac; font-size: 0.68rem; line-height: 1.5; }
       .error-banner.visible { display: block; }
-      .traffic { display: grid; }
-      .traffic-row { display: grid; grid-template-columns: minmax(8rem, 0.7fr) minmax(12rem, 1.3fr) repeat(2, minmax(6rem, auto)); gap: 1rem; align-items: center; padding: 0.8rem 0.9rem; border-bottom: 1px solid #22282e; }
-      .traffic-row:last-child { border-bottom: 0; }
-      .traffic-row strong { overflow: hidden; color: #d4dade; font-size: 0.7rem; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
-      .traffic-row span { color: #9aa4ac; font-size: 0.6875rem; font-variant-numeric: tabular-nums; text-align: right; }
-      .traffic-track { display: grid; grid-template-columns: var(--in, 0fr) var(--out, 0fr); gap: 2px; height: 0.3rem; background: #1d2329; }
-      .traffic-track i:first-child { background: #8866df; }
-      .traffic-track i:last-child { background: #429d79; }
-      .traffic-key { display: flex; gap: 0.9rem; }
-      .traffic-key i { display: inline-block; width: 0.4rem; height: 0.4rem; margin-right: 0.35rem; background: #8866df; }
-      .traffic-key span:last-child i { background: #429d79; }
+      .kpis { display: grid; grid-template-columns: repeat(12, 1fr); gap: 1px; margin-top: 0.8rem; border: 1px solid var(--line); background: var(--line); }
+      .kpi { position: relative; grid-column: span 2; min-width: 0; min-height: 9.5rem; overflow: hidden; padding: 1rem; background: rgb(13 17 22 / 96%); }
+      .kpi.primary { grid-column: span 2; }
+      .kpi-label { display: flex; justify-content: space-between; gap: 1rem; color: var(--muted); font-size: 0.62rem; letter-spacing: 0.06em; text-transform: uppercase; }
+      .kpi-label b { color: var(--green); font-weight: 500; }
+      .kpi-value { display: block; margin-top: 1.05rem; color: #f2f4f5; font-size: clamp(1.9rem, 2.8vw, 3rem); font-variant-numeric: tabular-nums; font-weight: 400; letter-spacing: -0.06em; line-height: 0.9; white-space: nowrap; }
+      #traffic-summary { font-size: clamp(1.7rem, 2.15vw, 2.3rem); }
+      .kpi-value.warn { color: var(--amber); }
+      .kpi-meta { position: absolute; right: 1rem; bottom: 0.9rem; left: 1rem; display: flex; justify-content: space-between; gap: 1rem; color: var(--muted); font-size: 0.59rem; text-transform: uppercase; }
+      .meter { position: absolute; right: 1rem; bottom: 2rem; left: 1rem; height: 2px; background: #242a30; }
+      .meter i { display: block; width: var(--value, 0%); height: 100%; background: var(--violet); }
+      .dashboard { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 0.8rem; margin-top: 0.8rem; }
+      .panel { min-width: 0; border: 1px solid var(--line); background: rgb(13 17 22 / 88%); }
+      .panel-head { display: flex; justify-content: space-between; gap: 1rem; align-items: center; min-height: 2.7rem; padding: 0 0.85rem; border-bottom: 1px solid var(--line); }
+      .panel-head h2 { margin: 0; color: #cdd3d8; font-size: 0.66rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; }
+      .panel-head span { color: var(--muted); font-size: 0.59rem; text-align: right; text-transform: uppercase; }
+      .bgp-chart { grid-column: span 7; }
+      .traffic-chart { grid-column: span 5; }
+      .chart { position: relative; height: 17rem; padding: 1rem 0.9rem 0.7rem; }
+      .chart svg { display: block; width: 100%; height: 13.2rem; overflow: visible; }
+      .grid-line { stroke: #252d35; stroke-width: 1; vector-effect: non-scaling-stroke; }
+      .axis-line { stroke: #38424c; stroke-width: 1; vector-effect: non-scaling-stroke; }
+      .bgp-area { fill: url(#bgp-area); }
+      .bgp-line { fill: none; stroke: var(--violet); stroke-width: 2.25; vector-effect: non-scaling-stroke; }
+      .traffic-in-area { fill: url(#traffic-in-area); }
+      .traffic-out-area { fill: url(#traffic-out-area); }
+      .traffic-in-line { fill: none; stroke: var(--violet); stroke-width: 2; vector-effect: non-scaling-stroke; }
+      .traffic-out-line { fill: none; stroke: var(--green); stroke-width: 2; vector-effect: non-scaling-stroke; }
+      .chart-empty { display: grid; height: 100%; place-items: center; color: var(--muted); font-size: 0.66rem; text-align: center; }
+      .chart-footer { display: flex; justify-content: space-between; gap: 0.7rem; margin-top: 0.55rem; color: var(--muted); font-size: 0.58rem; font-variant-numeric: tabular-nums; text-transform: uppercase; }
+      .chart-footer strong { color: #c6b6ec; font-weight: 500; }
+      .legend { display: flex; gap: 0.8rem; }
+      .legend i { display: inline-block; width: 0.42rem; height: 0.42rem; margin-right: 0.3rem; background: var(--violet); }
+      .legend span:last-child i { background: var(--green); }
+      .ops-main { grid-column: span 8; display: grid; gap: 0.8rem; align-content: start; }
+      .infra { grid-column: span 4; display: grid; gap: 0.8rem; align-content: start; }
+      .session-grid { display: grid; grid-template-columns: repeat(3, 1fr); }
+      .session { min-width: 0; min-height: 5.4rem; padding: 0.8rem; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+      .session:nth-child(3n) { border-right: 0; }
+      .session-head { display: flex; justify-content: space-between; gap: 0.7rem; align-items: center; }
+      .session strong { overflow: hidden; color: #dce1e4; font-size: 0.68rem; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
+      .status-dot { flex: 0 0 auto; width: 0.4rem; height: 0.4rem; border-radius: 50%; background: var(--red); }
+      .session small { display: block; margin-top: 0.5rem; overflow: hidden; color: var(--muted); font-size: 0.58rem; line-height: 1.55; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
+      .session em { display: block; margin-top: 0.35rem; color: #a9b2b9; font-size: 0.59rem; font-style: normal; text-transform: uppercase; }
+      .states { display: grid; }
+      .state { display: grid; grid-template-columns: 0.6rem minmax(0, 1fr) auto; gap: 0.6rem; align-items: center; padding: 0.72rem 0.8rem; border-bottom: 1px solid var(--line); }
+      .state:last-child { border-bottom: 0; }
+      .state strong { display: block; overflow: hidden; color: #d4dadd; font-size: 0.64rem; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
+      .state small { display: block; overflow: hidden; margin-top: 0.15rem; color: var(--muted); font-size: 0.57rem; text-overflow: ellipsis; white-space: nowrap; }
+      .state b { color: #9aa4ab; font-size: 0.57rem; font-weight: 400; text-transform: uppercase; }
+      .alerts-empty { padding: 1rem 0.8rem; color: var(--muted); font-size: 0.62rem; line-height: 1.5; }
+      .alert { padding: 0.75rem 0.8rem; border-bottom: 1px solid var(--line); background: rgb(225 94 104 / 5%); }
+      .alert:last-child { border-bottom: 0; }
+      .alert strong { display: block; color: #ef9ba2; font-size: 0.64rem; font-weight: 500; }
+      .alert small { display: block; margin-top: 0.3rem; color: #b99295; font-size: 0.58rem; }
       .profile { display: grid; grid-template-columns: repeat(4, 1fr); }
-      .profile-item { min-width: 0; padding: 0.9rem; border-right: 1px solid #22282e; }
+      .profile-item { min-width: 0; padding: 0.8rem; border-right: 1px solid var(--line); }
       .profile-item:last-child { border-right: 0; }
-      .profile-item span { display: block; color: #7f8992; font-size: 0.62rem; letter-spacing: 0.06em; text-transform: uppercase; }
-      .profile-item strong, .profile-item a { display: block; margin-top: 0.45rem; overflow: hidden; color: #d4dade; font-size: 0.7rem; font-weight: 500; text-decoration: none; text-overflow: ellipsis; white-space: nowrap; }
-      .profile-item a:hover { color: #b9a6ea; text-decoration: underline; text-underline-offset: 0.25rem; }
-      .telemetry-unavailable .summary, .telemetry-unavailable .dashboard { opacity: 0.72; }
-      .skeleton { color: transparent !important; background: #151a20; }
+      .profile-item span { display: block; color: var(--muted); font-size: 0.57rem; letter-spacing: 0.06em; text-transform: uppercase; }
+      .profile-item strong, .profile-item a { display: block; margin-top: 0.4rem; overflow: hidden; color: #dce1e4; font-size: 0.65rem; font-weight: 500; text-decoration: none; text-overflow: ellipsis; white-space: nowrap; }
+      .profile-item a:hover { color: #c5b3f3; text-decoration: underline; text-underline-offset: 0.22rem; }
+      .skeleton { color: transparent !important; background: #171d23; }
+      .telemetry-unavailable .kpis, .telemetry-unavailable .dashboard { opacity: 0.7; }
       @keyframes rotate { to { transform: rotate(360deg); } }
-      @media (max-width: 68rem) { .summary { grid-template-columns: repeat(3, 1fr); } .metric:nth-child(n + 4) { border-top: 1px solid #252b31; } .metric:nth-child(4) { padding-left: 0; border-left: 0; } .dashboard { grid-template-columns: 1fr; } .chart-panel { grid-column: auto; } }
-      @media (max-width: 50rem) { .shell { grid-template-columns: 1fr; } aside { z-index: 3; display: grid; grid-template-columns: minmax(0, 1fr) auto; height: auto; padding: 1rem clamp(1rem, 4vw, 1.4rem) 0; border-right: 0; border-bottom: 1px solid #252b31; } nav { display: flex; grid-column: 1 / -1; gap: 0; margin: 0.75rem -0.25rem 0; overflow-x: auto; scrollbar-width: none; } nav::-webkit-scrollbar { display: none; } nav a { flex: 0 0 auto; padding-inline: 0.75rem; border-bottom: 1px solid transparent; border-left: 0; } nav a:first-child { border-bottom-color: #8d70db; background: linear-gradient(0deg, rgb(113 73 221 / 15%), transparent); } .connection { margin: 0; align-self: center; text-align: right; } }
-      @media (max-width: 35rem) { main { padding: 1rem; } header { align-items: end; } .refresh { width: 2.75rem; padding: 0; justify-content: center; } .refresh span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; } .summary { grid-template-columns: repeat(2, 1fr); } .metric:nth-child(n) { padding-left: 1.2rem; border-top: 0; border-left: 1px solid #252b31; } .metric:nth-child(n + 3) { border-top: 1px solid #252b31; } .metric:nth-child(odd) { padding-left: 0; border-left: 0; } .panel-head { gap: 1rem; } .panel-head span { max-width: 14rem; } .protocols { grid-template-columns: 1fr; } .protocol:nth-child(odd) { border-right: 0; } .traffic-row { grid-template-columns: minmax(0, 1fr) auto auto; gap: 0.75rem; } .traffic-track { grid-column: 1 / -1; grid-row: 2; } .profile { grid-template-columns: repeat(2, 1fr); } .profile-item:nth-child(2) { border-right: 0; } .profile-item:nth-child(n + 3) { border-top: 1px solid #22282e; } }
+      @media (max-width: 72rem) { .shell { grid-template-columns: 1fr; } aside { z-index: 3; display: grid; grid-template-columns: minmax(0, 1fr) auto; height: auto; padding: 0.8rem 1rem 0; border-right: 0; border-bottom: 1px solid var(--line); } nav { display: flex; grid-column: 1 / -1; gap: 0; margin: 0.55rem -0.25rem 0; overflow-x: auto; scrollbar-width: none; } nav::-webkit-scrollbar { display: none; } nav a { flex: 0 0 auto; padding-inline: 0.65rem; border-right: 0; border-bottom: 1px solid transparent; border-left: 0; } nav a:hover, nav a:first-child { border-bottom-color: var(--violet); background: linear-gradient(0deg, rgb(148 112 239 / 13%), transparent); } .connection { align-self: center; margin: 0; text-align: right; } .kpi.primary { grid-column: span 6; } .kpi:not(.primary) { grid-column: span 3; } .bgp-chart, .traffic-chart { grid-column: 1 / -1; } }
+      @media (max-width: 48rem) { .title-group { display: block; } .title-group p { margin-top: 0.5rem; } .kpi.primary { grid-column: span 6; } .kpi:not(.primary) { grid-column: span 3; } .ops-main, .infra { grid-column: 1 / -1; } .session-grid { grid-template-columns: repeat(2, 1fr); } .session:nth-child(3n) { border-right: 1px solid var(--line); } .session:nth-child(2n) { border-right: 0; } }
+      @media (max-width: 35rem) { main { padding: 0.75rem; } .topbar { align-items: end; } .refresh { width: 2.6rem; padding: 0; justify-content: center; } .refresh span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; } .kpi.primary { grid-column: 1 / -1; min-height: 8.8rem; } .kpi:not(.primary) { grid-column: span 6; min-height: 8rem; } .chart { height: 14rem; } .chart svg { height: 10.2rem; } .panel-head { align-items: center; } .panel-head > span:not(.legend) { max-width: 10rem; } .session-grid { grid-template-columns: 1fr; } .session:nth-child(n) { border-right: 0; } .profile { grid-template-columns: repeat(2, 1fr); } .profile-item:nth-child(2) { border-right: 0; } .profile-item:nth-child(n + 3) { border-top: 1px solid var(--line); } }
       @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .refresh:disabled svg { animation: none; } }
-      @media (forced-colors: active) { .connection i, .state-dot, .protocol i { border: 1px solid currentColor; } }
+      @media (forced-colors: active) { .dot, .status-dot { border: 1px solid currentColor; } }
     </style>
   </head>
   <body>
     <a class="skip-link" href="#overview">Skip to live overview</a>
     <div class="shell">
       <aside>
-        <div class="brand"><span class="brand-mark">AS</span><span>218822<small>live operations</small></span></div>
-        <nav aria-label="Console navigation"><a href="#overview">Overview</a><a href="#sessions">BGP sessions</a><a href="#traffic">Traffic</a><a href="#infrastructure">Infrastructure</a><a href="#alerts">Alerts</a></nav>
-        <div class="connection" role="status" aria-live="polite"><strong><i id="connection-dot" aria-hidden="true"></i><span id="connection-state">Connecting</span></strong><span id="updated-at">Awaiting telemetry</span></div>
+        <div class="brand"><span class="brand-mark">AS</span><span>218822<small>network control</small></span></div>
+        <nav aria-label="Console navigation"><a href="#overview">Overview</a><a href="#charts">Graphs</a><a href="#sessions">Sessions</a><a href="#infrastructure">Infrastructure</a><a href="#registry">Registry</a></nav>
+        <div class="connection" role="status" aria-live="polite"><strong><i class="dot" id="connection-dot" aria-hidden="true"></i><span id="connection-state">Connecting</span></strong><span id="updated-at">Awaiting telemetry</span></div>
       </aside>
 
       <main id="overview">
-        <header>
-          <h1>Network<br />operations</h1>
-          <button class="refresh" id="refresh" type="button"><span>Refresh data</span><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M13.25 4.75V1.5m0 3.25H10M13.05 8a5.25 5.25 0 1 1-1.12-3.24" stroke="currentColor" stroke-width="1.4" stroke-linecap="square" /></svg></button>
+        <header class="topbar">
+          <div class="title-group"><h1>Network control</h1><p>Public telemetry / IPv6 autonomous system</p></div>
+          <button class="refresh" id="refresh" type="button"><span>Refresh telemetry</span><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M13.25 4.75V1.5m0 3.25H10M13.05 8a5.25 5.25 0 1 1-1.12-3.24" stroke="currentColor" stroke-width="1.4" stroke-linecap="square" /></svg></button>
         </header>
         <div class="error-banner" id="error" role="alert"></div>
 
-        <section class="summary" aria-label="Live network summary">
-          <div class="metric"><span>BGP sessions</span><strong id="bgp-summary" class="skeleton">-- / --</strong></div>
-          <div class="metric"><span>Routers online</span><strong id="router-summary" class="skeleton">-- / --</strong></div>
-          <div class="metric"><span>Containers ready</span><strong id="container-summary" class="skeleton">-- / --</strong></div>
-          <div class="metric"><span>Active alerts</span><strong id="alert-summary" class="skeleton">--</strong></div>
-          <div class="metric"><span>Validated VRPs</span><strong id="vrp-summary" class="skeleton">--</strong></div>
-          <div class="metric"><span>Current traffic</span><strong id="traffic-summary" class="skeleton">--</strong></div>
+        <section class="kpis" aria-label="Live network summary">
+          <div class="kpi primary"><div class="kpi-label"><span>BGP established</span><b id="bgp-health">Checking</b></div><strong class="kpi-value skeleton" id="bgp-summary">-- / --</strong><div class="meter"><i id="bgp-meter"></i></div><div class="kpi-meta"><span>Live sessions</span><span id="bgp-percent">--%</span></div></div>
+          <div class="kpi primary"><div class="kpi-label"><span>Aggregate traffic</span><b>5 min rate</b></div><strong class="kpi-value skeleton" id="traffic-summary">--</strong><div class="kpi-meta"><span id="traffic-in">IN --</span><span id="traffic-out">OUT --</span></div></div>
+          <div class="kpi"><div class="kpi-label"><span>Routers</span></div><strong class="kpi-value skeleton" id="router-summary">-- / --</strong><div class="kpi-meta"><span>Online</span><span id="router-percent">--%</span></div></div>
+          <div class="kpi"><div class="kpi-label"><span>Workloads</span></div><strong class="kpi-value skeleton" id="container-summary">-- / --</strong><div class="kpi-meta"><span>Ready</span><span id="container-percent">--%</span></div></div>
+          <div class="kpi"><div class="kpi-label"><span>Alerts</span></div><strong class="kpi-value skeleton" id="alert-summary">--</strong><div class="kpi-meta"><span>Firing now</span><span>Prometheus</span></div></div>
+          <div class="kpi"><div class="kpi-label"><span>RPKI dataset</span></div><strong class="kpi-value skeleton" id="vrp-summary">--</strong><div class="kpi-meta"><span>Validated VRPs</span><span>Routinator</span></div></div>
         </section>
 
-        <div class="dashboard">
-          <section class="panel chart-panel">
-            <div class="panel-head"><h2>BGP availability</h2><span>Last 6 hours / 5 minute resolution</span></div>
-            <div class="chart-wrap" id="chart-wrap"><div class="chart-empty">Loading history...</div></div>
-            <div class="chart-detail" id="chart-detail"><span>Oldest sample</span><strong>Awaiting samples</strong><span>Latest sample</span></div>
+        <div class="dashboard" id="charts">
+          <section class="panel bgp-chart">
+            <div class="panel-head"><h2>BGP availability</h2><span>6 hours / 5 minute samples</span></div>
+            <div class="chart" id="bgp-chart"><div class="chart-empty">Loading BGP history...</div></div>
+          </section>
+          <section class="panel traffic-chart">
+            <div class="panel-head"><h2>Network throughput</h2><span class="legend"><span><i></i>Inbound</span><span><i></i>Outbound</span></span></div>
+            <div class="chart" id="traffic-chart"><div class="chart-empty">Loading traffic history...</div></div>
           </section>
 
-          <div class="stack">
-            <section class="panel" id="sessions">
-              <div class="panel-head"><h2>BGP sessions</h2><span id="session-count">Live state</span></div>
-              <div class="protocols" id="protocols" role="list"><div class="alerts-empty">Loading sessions...</div></div>
+          <div class="ops-main">
+            <section class="panel sessions" id="sessions">
+              <div class="panel-head"><h2>BGP session matrix</h2><span id="session-count">Live state</span></div>
+              <div class="session-grid" id="protocols" role="list"><div class="alerts-empty">Loading sessions...</div></div>
             </section>
-            <section class="panel" id="traffic">
-              <div class="panel-head"><h2>Overlay traffic</h2><span class="traffic-key"><span><i></i>Inbound</span><span><i></i>Outbound</span></span></div>
-              <div class="traffic" id="traffic-list"><div class="alerts-empty">Loading traffic rates...</div></div>
+            <section class="panel registry" id="registry" aria-labelledby="registry-title">
+              <div class="panel-head"><h2 id="registry-title">Network registry</h2><span>Public routing identity</span></div>
+              <div class="profile">
+                <div class="profile-item"><span>Address family</span><strong>IPv6 only</strong></div>
+                <div class="profile-item"><span>Origin prefix</span><strong>2a06:9801:ff0::/44</strong></div>
+                <div class="profile-item"><span>Peering policy</span><a href="https://as218822.net/peering/">Open policy</a></div>
+                <div class="profile-item"><span>Registry</span><a href="https://www.peeringdb.com/net/43433">PeeringDB #43433</a></div>
+              </div>
             </section>
           </div>
 
-          <div class="stack" id="infrastructure">
-            <section class="panel">
-              <div class="panel-head"><h2>IPv6 probes</h2><span>External reachability</span></div>
-              <div class="states" id="probes" role="list"><div class="alerts-empty">Loading probes...</div></div>
-            </section>
-            <section class="panel">
-              <div class="panel-head"><h2>Workloads</h2><span id="workload-count">Kubernetes</span></div>
-              <div class="states" id="workloads" role="list"><div class="alerts-empty">Loading workloads...</div></div>
-            </section>
-            <section class="panel" id="alerts">
-              <div class="panel-head"><h2>Active alerts</h2><span>Prometheus rules</span></div>
-              <div id="alerts-list" role="list"><div class="alerts-empty">Loading alerts...</div></div>
-            </section>
+          <div class="infra" id="infrastructure">
+            <section class="panel"><div class="panel-head"><h2>IPv6 probes</h2><span>External reachability</span></div><div class="states" id="probes" role="list"><div class="alerts-empty">Loading probes...</div></div></section>
+            <section class="panel"><div class="panel-head"><h2>Workloads</h2><span id="workload-count">Kubernetes</span></div><div class="states" id="workloads" role="list"><div class="alerts-empty">Loading workloads...</div></div></section>
+            <section class="panel"><div class="panel-head"><h2>Active alerts</h2><span>Prometheus rules</span></div><div id="alerts-list" role="list"><div class="alerts-empty">Loading alerts...</div></div></section>
           </div>
-
-          <section class="panel chart-panel" aria-labelledby="profile-title">
-            <div class="panel-head"><h2 id="profile-title">Network registry</h2><span>Public routing identity</span></div>
-            <div class="profile">
-              <div class="profile-item"><span>Address family</span><strong>IPv6 only</strong></div>
-              <div class="profile-item"><span>Origin prefix</span><strong>2a06:9801:ff0::/44</strong></div>
-              <div class="profile-item"><span>Peering policy</span><a href="https://as218822.net/peering/">Open policy</a></div>
-              <div class="profile-item"><span>Registry</span><a href="https://www.peeringdb.com/net/43433">PeeringDB #43433</a></div>
-            </div>
-          </section>
         </div>
       </main>
     </div>
 
     <script>
       // @ts-nocheck
-      const elements = Object.fromEntries(["bgp-summary", "router-summary", "container-summary", "alert-summary", "vrp-summary", "traffic-summary", "connection-dot", "connection-state", "updated-at", "refresh", "error", "chart-wrap", "chart-detail", "protocols", "session-count", "traffic-list", "probes", "workloads", "workload-count", "alerts-list"].map((id) => [id, document.getElementById(id)]));
+      const ids = ["bgp-summary", "traffic-summary", "router-summary", "container-summary", "alert-summary", "vrp-summary", "bgp-health", "bgp-meter", "bgp-percent", "traffic-in", "traffic-out", "router-percent", "container-percent", "connection-dot", "connection-state", "updated-at", "refresh", "error", "bgp-chart", "traffic-chart", "protocols", "session-count", "probes", "workloads", "workload-count", "alerts-list"];
+      const elements = Object.fromEntries(ids.map((id) => [id, document.getElementById(id)]));
       const escapeHtml = (value) => String(value ?? "").replace(/[&<>'"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[character]);
       const label = (value) => String(value ?? "unknown").replace(/_/g, " ");
+      const percent = (value, total) => total ? Math.round((value / total) * 100) : 0;
       const rate = (bytes) => {
         const bits = Math.max(0, Number(bytes) || 0) * 8;
         const units = ["bps", "Kbps", "Mbps", "Gbps"];
         const tier = Math.min(Math.floor(Math.log10(Math.max(bits, 1)) / 3), units.length - 1);
         return `${(bits / (1000 ** tier)).toLocaleString("en", { maximumFractionDigits: tier ? 1 : 0 })} ${units[tier]}`;
       };
-      const sampleTime = (value) => new Date(value).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
+      const time = (value) => new Date(value).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
       let hasData = false;
 
       function setMetric(id, value, warning = false) {
-        const element = elements[id];
-        element.textContent = value;
-        element.classList.remove("skeleton");
-        element.classList.toggle("warn", warning);
+        elements[id].textContent = value;
+        elements[id].classList.remove("skeleton");
+        elements[id].classList.toggle("warn", warning);
       }
 
-      function drawHistory(history) {
+      function points(values, width, height, maximum) {
+        return values.map((value, index) => `${values.length === 1 ? 0 : (index / (values.length - 1)) * width},${height - (value / maximum) * (height - 12) - 6}`).join(" ");
+      }
+
+      function chartGrid(width, height) {
+        return [0.25, 0.5, 0.75].map((ratio) => `<line class="grid-line" x1="0" y1="${height * ratio}" x2="${width}" y2="${height * ratio}"/>`).join("");
+      }
+
+      function drawBgp(history) {
         if (!history.length) {
-          elements["chart-wrap"].innerHTML = '<div class="chart-empty">No historical samples available.</div>';
-          elements["chart-detail"].innerHTML = '<span>6 hour window</span><strong>No samples</strong><span>5 minute resolution</span>';
+          elements["bgp-chart"].innerHTML = '<div class="chart-empty">No BGP history available.</div>';
           return;
         }
         const width = 1000;
-        const height = 150;
-        const maximum = Math.max(...history.map((point) => point.total), 1);
-        const points = history.map((point, index) => {
-          const x = history.length === 1 ? 0 : (index / (history.length - 1)) * width;
-          const y = height - (point.up / maximum) * (height - 12) - 6;
-          return `${x.toFixed(1)},${y.toFixed(1)}`;
-        }).join(" ");
-        const area = `0,${height} ${points} ${width},${height}`;
-        elements["chart-wrap"].innerHTML = `<svg id="history-chart" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" role="img" aria-label="BGP sessions up over the last six hours"><defs><linearGradient id="area" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7956d3" stop-opacity=".35"/><stop offset="1" stop-color="#7956d3" stop-opacity="0"/></linearGradient></defs><line class="chart-grid" x1="0" y1="${height / 2}" x2="${width}" y2="${height / 2}"/><polygon class="chart-area" points="${area}"/><polyline class="chart-line" points="${points}"/></svg>`;
+        const height = 190;
+        const maximum = Math.max(...history.map((item) => item.total), 1);
+        const line = points(history.map((item) => item.up), width, height, maximum);
         const latest = history.at(-1);
-        elements["chart-detail"].innerHTML = `<span>${sampleTime(history[0].timestamp)}</span><strong>${latest.up} / ${latest.total} established now</strong><span>${sampleTime(latest.timestamp)}</span>`;
+        elements["bgp-chart"].innerHTML = `<svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" role="img" aria-label="BGP sessions established over six hours"><defs><linearGradient id="bgp-area" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9470ef" stop-opacity=".4"/><stop offset="1" stop-color="#9470ef" stop-opacity="0"/></linearGradient></defs>${chartGrid(width, height)}<line class="axis-line" x1="0" y1="${height}" x2="${width}" y2="${height}"/><polygon class="bgp-area" points="0,${height} ${line} ${width},${height}"/><polyline class="bgp-line" points="${line}"/></svg><div class="chart-footer"><span>${time(history[0].timestamp)}</span><strong>${latest.up} / ${latest.total} established now</strong><span>${time(latest.timestamp)}</span></div>`;
+      }
+
+      function drawTraffic(history) {
+        if (!history.length) {
+          elements["traffic-chart"].innerHTML = '<div class="chart-empty">No traffic history available.</div>';
+          return;
+        }
+        const width = 1000;
+        const height = 190;
+        const maximum = Math.max(...history.flatMap((item) => [item.in, item.out]), 1);
+        const inbound = points(history.map((item) => item.in), width, height, maximum);
+        const outbound = points(history.map((item) => item.out), width, height, maximum);
+        const latest = history.at(-1);
+        elements["traffic-chart"].innerHTML = `<svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" role="img" aria-label="Inbound and outbound network traffic over six hours"><defs><linearGradient id="traffic-in-area" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9470ef" stop-opacity=".3"/><stop offset="1" stop-color="#9470ef" stop-opacity="0"/></linearGradient><linearGradient id="traffic-out-area" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#45cf91" stop-opacity=".2"/><stop offset="1" stop-color="#45cf91" stop-opacity="0"/></linearGradient></defs>${chartGrid(width, height)}<line class="axis-line" x1="0" y1="${height}" x2="${width}" y2="${height}"/><polygon class="traffic-in-area" points="0,${height} ${inbound} ${width},${height}"/><polygon class="traffic-out-area" points="0,${height} ${outbound} ${width},${height}"/><polyline class="traffic-in-line" points="${inbound}"/><polyline class="traffic-out-line" points="${outbound}"/></svg><div class="chart-footer"><span>${time(history[0].timestamp)}</span><strong>IN ${rate(latest.in)} / OUT ${rate(latest.out)}</strong><span>${time(latest.timestamp)}</span></div>`;
       }
 
       function render(data) {
         hasData = true;
         document.body.classList.remove("telemetry-unavailable");
         const summary = data.summary;
-        setMetric("bgp-summary", `${summary.bgpUp} / ${summary.bgpTotal}`, summary.bgpUp < summary.bgpTotal);
-        setMetric("router-summary", `${summary.routersUp} / ${summary.routersTotal}`, summary.routersUp < summary.routersTotal);
-        setMetric("container-summary", `${summary.containersReady} / ${summary.containersTotal}`, summary.containersReady < summary.containersTotal);
+        const bgpPercent = percent(summary.bgpUp, summary.bgpTotal);
+        const routerPercent = percent(summary.routersUp, summary.routersTotal);
+        const containerPercent = percent(summary.containersReady, summary.containersTotal);
+        const inbound = data.traffic.filter((item) => item.direction === "in").reduce((total, item) => total + item.bytesPerSecond, 0);
+        const outbound = data.traffic.filter((item) => item.direction === "out").reduce((total, item) => total + item.bytesPerSecond, 0);
+        setMetric("bgp-summary", `${summary.bgpUp} / ${summary.bgpTotal}`, bgpPercent < 100);
+        setMetric("traffic-summary", rate(inbound + outbound));
+        setMetric("router-summary", `${summary.routersUp} / ${summary.routersTotal}`, routerPercent < 100);
+        setMetric("container-summary", `${summary.containersReady} / ${summary.containersTotal}`, containerPercent < 100);
         setMetric("alert-summary", String(summary.activeAlerts), summary.activeAlerts > 0);
-        setMetric("vrp-summary", summary.vrps === null ? "N/A" : new Intl.NumberFormat("en").format(summary.vrps));
-        const totalTraffic = data.traffic.reduce((total, item) => total + item.bytesPerSecond, 0);
-        setMetric("traffic-summary", rate(totalTraffic));
+        setMetric("vrp-summary", summary.vrps === null ? "N/A" : new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 2 }).format(summary.vrps));
+        elements["bgp-health"].textContent = bgpPercent === 100 ? "Healthy" : "Degraded";
+        elements["bgp-health"].style.color = bgpPercent === 100 ? "var(--green)" : "var(--amber)";
+        elements["bgp-meter"].style.setProperty("--value", `${bgpPercent}%`);
+        elements["bgp-percent"].textContent = `${bgpPercent}%`;
+        elements["traffic-in"].textContent = `IN ${rate(inbound)}`;
+        elements["traffic-out"].textContent = `OUT ${rate(outbound)}`;
+        elements["router-percent"].textContent = `${routerPercent}%`;
+        elements["container-percent"].textContent = `${containerPercent}%`;
         elements["connection-dot"].classList.add("online");
         elements["connection-state"].textContent = "Telemetry online";
         elements["updated-at"].textContent = `Updated ${new Date(data.generatedAt).toLocaleTimeString([], { hour12: false })}`;
@@ -243,20 +266,13 @@ import "@fontsource/ibm-plex-mono/600.css";
 
         const bgp = data.protocols.filter((protocol) => protocol.type === "BGP");
         elements["session-count"].textContent = `${summary.bgpUp} of ${summary.bgpTotal} established`;
-        elements.protocols.innerHTML = bgp.map((protocol) => `<div class="protocol ${protocol.up ? "up" : ""}" role="listitem"><i aria-hidden="true"></i><span><strong>${escapeHtml(label(protocol.name))}</strong><small>${escapeHtml(protocol.location)} / sampled ${sampleTime(protocol.observedAt)}</small></span><em>${protocol.up ? "Established" : "Down"}</em></div>`).join("") || '<div class="alerts-empty">No BGP sessions configured.</div>';
-        const trafficByPod = new Map();
-        for (const item of data.traffic) {
-          const pod = trafficByPod.get(item.pod) ?? { in: 0, out: 0 };
-          pod[item.direction === "out" ? "out" : "in"] += item.bytesPerSecond;
-          trafficByPod.set(item.pod, pod);
-        }
-        const peakTraffic = Math.max(...[...trafficByPod.values()].map((item) => item.in + item.out), 1);
-        elements["traffic-list"].innerHTML = [...trafficByPod].sort(([a], [b]) => a.localeCompare(b)).map(([pod, traffic]) => `<div class="traffic-row"><strong>${escapeHtml(pod)}</strong><div class="traffic-track" style="--in:${traffic.in / peakTraffic}fr;--out:${traffic.out / peakTraffic}fr" aria-hidden="true"><i></i><i></i></div><span>IN ${rate(traffic.in)}</span><span>OUT ${rate(traffic.out)}</span></div>`).join("") || '<div class="alerts-empty">No overlay traffic samples reported.</div>';
-        elements.probes.innerHTML = data.reachability.map((probe) => `<div class="state" role="listitem"><i class="state-dot ${probe.reachable ? "up" : ""}" aria-hidden="true"></i><span><strong>${escapeHtml(probe.target)}</strong><small>${escapeHtml(probe.location)}</small></span><b>${probe.reachable ? "Reachable" : "Failed"}</b></div>`).join("") || '<div class="alerts-empty">No probes configured.</div>';
+        elements.protocols.innerHTML = bgp.map((protocol) => `<div class="session" role="listitem"><div class="session-head"><strong>${escapeHtml(label(protocol.name))}</strong><i class="status-dot ${protocol.up ? "up" : ""}" aria-hidden="true"></i></div><small>${escapeHtml(protocol.location)}</small><em>${protocol.up ? "Established" : "Down"} / ${time(protocol.observedAt)}</em></div>`).join("") || '<div class="alerts-empty">No BGP sessions configured.</div>';
+        elements.probes.innerHTML = data.reachability.map((probe) => `<div class="state" role="listitem"><i class="status-dot ${probe.reachable ? "up" : ""}" aria-hidden="true"></i><span><strong>${escapeHtml(probe.target)}</strong><small>${escapeHtml(probe.location)}</small></span><b>${probe.reachable ? "Reachable" : "Failed"}</b></div>`).join("") || '<div class="alerts-empty">No probes configured.</div>';
         elements["workload-count"].textContent = `${summary.containersReady} of ${summary.containersTotal} ready`;
-        elements.workloads.innerHTML = data.containers.map((container) => `<div class="state" role="listitem"><i class="state-dot ${container.ready ? "up" : ""}" aria-hidden="true"></i><span><strong>${escapeHtml(label(container.name))}</strong><small>${escapeHtml(container.pod)}</small></span><b>${container.ready ? "Ready" : "Not ready"}</b></div>`).join("") || '<div class="alerts-empty">No workloads reported.</div>';
+        elements.workloads.innerHTML = data.containers.map((container) => `<div class="state" role="listitem"><i class="status-dot ${container.ready ? "up" : ""}" aria-hidden="true"></i><span><strong>${escapeHtml(label(container.name))}</strong><small>${escapeHtml(container.pod)}</small></span><b>${container.ready ? "Ready" : "Not ready"}</b></div>`).join("") || '<div class="alerts-empty">No workloads reported.</div>';
         elements["alerts-list"].innerHTML = data.alerts.length ? data.alerts.map((alert) => `<div class="alert" role="listitem"><strong>${escapeHtml(label(alert.name))}</strong><small>${escapeHtml([alert.severity, alert.location, label(alert.protocol)].filter(Boolean).join(" / "))}</small></div>`).join("") : '<div class="alerts-empty">No active AS218822 alerts.</div>';
-        drawHistory(data.history);
+        drawBgp(data.history);
+        drawTraffic(data.trafficHistory);
       }
 
       async function refresh() {
@@ -277,10 +293,10 @@ import "@fontsource/ibm-plex-mono/600.css";
           elements.error.textContent = `${error instanceof Error ? error.message : "Monitoring data is unavailable."} Try refreshing in a moment.`;
           elements.error.classList.add("visible");
           if (!hasData) {
-            ["bgp-summary", "router-summary", "container-summary", "alert-summary", "vrp-summary", "traffic-summary"].forEach((id) => setMetric(id, "--"));
-            elements["chart-wrap"].innerHTML = '<div class="chart-empty">History unavailable until telemetry reconnects.</div>';
+            ["bgp-summary", "traffic-summary", "router-summary", "container-summary", "alert-summary", "vrp-summary"].forEach((id) => setMetric(id, "--"));
+            elements["bgp-chart"].innerHTML = '<div class="chart-empty">BGP history unavailable.</div>';
+            elements["traffic-chart"].innerHTML = '<div class="chart-empty">Traffic history unavailable.</div>';
             elements.protocols.innerHTML = '<div class="alerts-empty">Session state unavailable.</div>';
-            elements["traffic-list"].innerHTML = '<div class="alerts-empty">Traffic rates unavailable.</div>';
             elements.probes.innerHTML = '<div class="alerts-empty">Probe state unavailable.</div>';
             elements.workloads.innerHTML = '<div class="alerts-empty">Workload state unavailable.</div>';
             elements["alerts-list"].innerHTML = '<div class="alerts-empty">Alert state unavailable.</div>';
