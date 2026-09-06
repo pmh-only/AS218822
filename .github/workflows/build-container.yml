@@ -5,6 +5,8 @@ on:
     paths:
       - ".github/workflows/build-container.yml"
       - "atlas/**"
+      - "console/**"
+      - "pnpm-lock.yaml"
       - "routing/**"
   push:
     branches:
@@ -12,6 +14,8 @@ on:
     paths:
       - ".github/workflows/build-container.yml"
       - "atlas/**"
+      - "console/**"
+      - "pnpm-lock.yaml"
       - "routing/**"
 
 permissions:
@@ -68,6 +72,18 @@ jobs:
           - component: looking-glass
             image: as218822-looking-glass
             context: routing/looking-glass
+            architecture: arm64
+            platform: linux/arm64
+            runner: ubuntu-24.04-arm
+          - component: console
+            image: console
+            context: console
+            architecture: amd64
+            platform: linux/amd64
+            runner: ubuntu-24.04
+          - component: console
+            image: console
+            context: console
             architecture: arm64
             platform: linux/arm64
             runner: ubuntu-24.04-arm
@@ -154,6 +170,8 @@ jobs:
             image: as218822
           - component: looking-glass
             image: as218822-looking-glass
+          - component: console
+            image: console
     runs-on: ubuntu-24.04
     steps:
       - name: Download image digests

@@ -1,6 +1,5 @@
 packages:
-  - console
-  - website
+  - .
 
 allowBuilds:
   esbuild: true
