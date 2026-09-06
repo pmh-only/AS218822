@@ -64,7 +64,7 @@ test("serves constrained live monitoring data", async (context) => {
     env: {
       ...process.env,
       CONSOLE_HOST: "127.0.0.1",
-      CONSOLE_PORT: String(consolePort),
+      CONSOLE_LISTEN_PORT: String(consolePort),
       PROMETHEUS_URL: `http://127.0.0.1:${mockAddress.port}`,
     },
     stdio: ["ignore", "pipe", "inherit"],

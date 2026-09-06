@@ -5,7 +5,7 @@ import { extname, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const host = process.env.CONSOLE_HOST ?? "0.0.0.0";
-const port = Number.parseInt(process.env.CONSOLE_PORT ?? "8080", 10);
+const port = Number.parseInt(process.env.CONSOLE_LISTEN_PORT ?? "8080", 10);
 const prometheusUrl = (process.env.PROMETHEUS_URL ?? "http://prometheus.monitoring.svc.cluster.local:9090").replace(/\/$/, "");
 const publicDir = fileURLToPath(new URL("./dist/", import.meta.url));
 const cacheTtl = 10_000;
