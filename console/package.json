@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro check && astro build",
-    "preview": "astro preview"
+    "preview": "astro preview",
+    "start": "node server.mjs",
+    "test": "node --test"
   },
   "dependencies": {
     "@fontsource/ibm-plex-mono": "^5.2.7",
