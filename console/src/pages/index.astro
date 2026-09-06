@@ -15,90 +15,98 @@ import "@fontsource/ibm-plex-mono/600.css";
     <title>AS218822 / Live Console</title>
     <style is:global>
       * { box-sizing: border-box; }
-      html { background: #080a0d; }
-      body { min-width: 20rem; min-height: 100vh; margin: 0; background: radial-gradient(circle at 77% 0%, rgb(109 72 210 / 13%), transparent 32rem), #080a0d; color: #dce3e9; font-family: "IBM Plex Mono", monospace; }
+      html { background: #080a0d; scroll-behavior: smooth; scrollbar-color: #3b444d #080a0d; }
+      body { min-width: 20rem; min-height: 100vh; margin: 0; background: radial-gradient(circle at 77% 0%, rgb(109 72 210 / 13%), transparent 32rem), #080a0d; color: #dce3e9; font-family: "IBM Plex Mono", monospace; -webkit-font-smoothing: antialiased; }
       button { font: inherit; }
+      button, a { -webkit-tap-highlight-color: transparent; }
+      :focus-visible { outline: 2px solid #a98cf2; outline-offset: 3px; }
       ::selection { background: #7150d2; color: white; }
+      .skip-link { position: fixed; z-index: 10; top: 0.8rem; left: 0.8rem; padding: 0.7rem 0.9rem; background: #f0f2f4; color: #080a0d; font-size: 0.75rem; font-weight: 600; transform: translateY(-200%); }
+      .skip-link:focus { transform: translateY(0); }
       .shell { display: grid; grid-template-columns: 14rem minmax(0, 1fr); min-height: 100vh; }
       aside { position: sticky; top: 0; display: flex; flex-direction: column; height: 100vh; padding: 1.4rem; border-right: 1px solid #252b31; background: rgb(7 9 12 / 90%); backdrop-filter: blur(16px); }
-      .brand { display: flex; align-items: center; gap: 0.75rem; color: #f1f3f5; font-size: 0.75rem; font-weight: 600; }
-      .brand-mark { display: grid; width: 2rem; height: 2rem; place-items: center; background: #7149dd; color: white; font-size: 0.6rem; }
-      .brand small { display: block; margin-top: 0.14rem; color: #69727b; font-size: 0.5rem; font-weight: 400; letter-spacing: 0.1em; text-transform: uppercase; }
+      .brand { display: flex; align-items: center; gap: 0.75rem; color: #f1f3f5; font-size: 0.8rem; font-weight: 600; }
+      .brand-mark { display: grid; width: 2.25rem; height: 2.25rem; place-items: center; background: #7149dd; color: white; font-size: 0.65rem; }
+      .brand small { display: block; margin-top: 0.14rem; color: #89939c; font-size: 0.6875rem; font-weight: 400; letter-spacing: 0.08em; text-transform: uppercase; }
       nav { display: grid; gap: 0.3rem; margin-top: 3.5rem; }
-      nav a { padding: 0.7rem; border-left: 1px solid transparent; color: #69727b; font-size: 0.6rem; text-decoration: none; text-transform: uppercase; }
+      nav a { display: flex; min-height: 2.75rem; align-items: center; padding: 0.7rem; border-left: 1px solid transparent; color: #89939c; font-size: 0.6875rem; text-decoration: none; text-transform: uppercase; transition: border-color 160ms ease-out, background-color 160ms ease-out, color 160ms ease-out; }
+      nav a:hover { border-color: #4b3c71; background: rgb(113 73 221 / 8%); color: #d6ccef; }
       nav a:first-child { border-color: #8d70db; background: linear-gradient(90deg, rgb(113 73 221 / 15%), transparent); color: #e0d8f6; }
-      .connection { margin-top: auto; color: #5d6670; font-size: 0.52rem; line-height: 1.7; text-transform: uppercase; }
+      .connection { margin-top: auto; color: #89939c; font-size: 0.6875rem; line-height: 1.7; text-transform: uppercase; }
       .connection strong { display: flex; align-items: center; gap: 0.45rem; color: #cbd2d8; font-weight: 500; }
       .connection i, .live-dot { width: 0.4rem; height: 0.4rem; border-radius: 50%; background: #767e86; }
-      .connection i.online, .live-dot.online { background: #48c58a; box-shadow: 0 0 0.6rem #48c58a; }
-      main { min-width: 0; padding: clamp(1.3rem, 3.5vw, 3.5rem); }
+      .connection i.online, .live-dot.online { background: #48c58a; }
+      main { width: 100%; max-width: 104rem; min-width: 0; margin-inline: auto; padding: clamp(1.3rem, 3.5vw, 3.5rem); }
       header { display: flex; justify-content: space-between; gap: 2rem; align-items: end; padding-bottom: 1.8rem; border-bottom: 1px solid #252b31; }
-      .kicker { margin: 0 0 0.7rem; color: #8b69e4; font-size: 0.56rem; letter-spacing: 0.14em; text-transform: uppercase; }
-      h1 { margin: 0; color: #f0f2f4; font-size: clamp(2rem, 4.5vw, 4.2rem); font-weight: 500; letter-spacing: -0.075em; line-height: 0.9; }
-      .refresh { display: flex; align-items: center; gap: 0.7rem; padding: 0.65rem 0.8rem; border: 1px solid #30373e; background: #101419; color: #9da6ad; cursor: pointer; font-size: 0.55rem; text-transform: uppercase; }
-      .refresh:hover { border-color: #66519f; color: white; }
-      .refresh:disabled { cursor: wait; opacity: 0.55; }
+      h1 { max-width: 10ch; margin: 0; color: #f0f2f4; font-size: clamp(2.25rem, 4.5vw, 4.2rem); font-weight: 500; letter-spacing: -0.04em; line-height: 0.92; text-wrap: balance; }
+      .refresh { display: flex; min-height: 2.75rem; align-items: center; gap: 0.65rem; padding: 0.7rem 0.85rem; border: 1px solid #3b444d; background: #101419; color: #b4bdc5; cursor: pointer; font-size: 0.6875rem; text-transform: uppercase; transition: border-color 160ms ease-out, background-color 160ms ease-out, color 160ms ease-out; }
+      .refresh svg { width: 0.9rem; height: 0.9rem; }
+      .refresh:hover { border-color: #8065c7; background: #15131d; color: white; }
+      .refresh:disabled { cursor: wait; opacity: 0.65; }
+      .refresh:disabled svg { animation: rotate 900ms linear infinite; }
       .summary { display: grid; grid-template-columns: repeat(5, 1fr); border-bottom: 1px solid #252b31; }
       .metric { min-width: 0; padding: 1.35rem 1rem 1.35rem 0; }
       .metric + .metric { padding-left: 1.2rem; border-left: 1px solid #252b31; }
-      .metric span { color: #626c75; font-size: 0.5rem; letter-spacing: 0.08em; text-transform: uppercase; }
-      .metric strong { display: block; margin-top: 0.65rem; color: #e9edef; font-size: clamp(1.15rem, 2.2vw, 1.75rem); font-weight: 400; letter-spacing: -0.06em; }
+      .metric span { color: #89939c; font-size: 0.6875rem; letter-spacing: 0.06em; text-transform: uppercase; }
+      .metric strong { display: block; margin-top: 0.65rem; color: #e9edef; font-size: clamp(1.3rem, 2.2vw, 1.75rem); font-variant-numeric: tabular-nums; font-weight: 400; letter-spacing: -0.03em; }
       .metric strong.warn { color: #e3a84f; }
       .dashboard { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(19rem, 0.6fr); gap: 0.9rem; padding-top: 0.9rem; }
       .panel { min-width: 0; border: 1px solid #252b31; background: rgb(13 16 20 / 78%); }
       .panel-head { display: flex; justify-content: space-between; align-items: center; min-height: 2.9rem; padding: 0 0.9rem; border-bottom: 1px solid #252b31; }
-      .panel-head h2 { margin: 0; color: #b9c0c6; font-size: 0.58rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; }
-      .panel-head span { color: #59626a; font-size: 0.48rem; text-transform: uppercase; }
+      .panel-head h2 { margin: 0; color: #c7ced4; font-size: 0.7rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; }
+      .panel-head span { color: #89939c; font-size: 0.6875rem; line-height: 1.4; text-align: right; text-transform: uppercase; }
       .chart-panel { grid-column: 1 / -1; }
       .chart-wrap { position: relative; height: 12rem; padding: 1rem; }
       #history-chart { width: 100%; height: 100%; overflow: visible; }
       .chart-grid { stroke: #272e35; stroke-width: 1; }
       .chart-area { fill: url(#area); }
       .chart-line { fill: none; stroke: #8866df; stroke-width: 2; vector-effect: non-scaling-stroke; }
-      .chart-empty { display: grid; height: 100%; place-items: center; color: #626c75; font-size: 0.58rem; }
+      .chart-empty { display: grid; height: 100%; place-items: center; color: #89939c; font-size: 0.7rem; text-align: center; }
       .protocols { display: grid; grid-template-columns: repeat(2, 1fr); }
-      .protocol { display: grid; grid-template-columns: 0.65rem 1fr auto; gap: 0.65rem; align-items: center; min-width: 0; padding: 0.85rem 0.9rem; border-bottom: 1px solid #22282e; }
+      .protocol { display: grid; grid-template-columns: 0.65rem minmax(0, 1fr) auto; gap: 0.65rem; align-items: center; min-width: 0; padding: 0.85rem 0.9rem; border-bottom: 1px solid #22282e; }
       .protocol:nth-child(odd) { border-right: 1px solid #22282e; }
-      .protocol i, .state-dot { width: 0.38rem; height: 0.38rem; border-radius: 50%; background: #d75561; box-shadow: 0 0 0.55rem #d75561; }
-      .protocol.up i, .state-dot.up { background: #41b980; box-shadow: 0 0 0.55rem #41b980; }
-      .protocol strong { display: block; overflow: hidden; color: #d8dde1; font-size: 0.58rem; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
-      .protocol small { display: block; margin-top: 0.2rem; color: #58636c; font-size: 0.48rem; text-transform: uppercase; }
-      .protocol em { color: #626d76; font-size: 0.46rem; font-style: normal; text-transform: uppercase; }
+      .protocol i, .state-dot { width: 0.38rem; height: 0.38rem; border-radius: 50%; background: #d75561; }
+      .protocol.up i, .state-dot.up { background: #41b980; }
+      .protocol strong { display: block; overflow: hidden; color: #d8dde1; font-size: 0.72rem; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
+      .protocol small { display: block; margin-top: 0.2rem; overflow: hidden; color: #87919a; font-size: 0.6875rem; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
+      .protocol em { color: #939da5; font-size: 0.6875rem; font-style: normal; text-transform: uppercase; }
       .stack { display: grid; gap: 0.9rem; align-content: start; }
       .states { display: grid; }
       .state { display: grid; grid-template-columns: 0.65rem minmax(0, 1fr) auto; gap: 0.65rem; align-items: center; padding: 0.8rem 0.9rem; border-bottom: 1px solid #22282e; }
       .state:last-child { border-bottom: 0; }
-      .state strong { display: block; overflow: hidden; color: #d4dade; font-size: 0.56rem; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
-      .state small { display: block; overflow: hidden; margin-top: 0.2rem; color: #59636c; font-size: 0.46rem; text-overflow: ellipsis; white-space: nowrap; }
-      .state b { color: #657078; font-size: 0.45rem; font-weight: 400; text-transform: uppercase; }
-      .alerts-empty { padding: 1.3rem 0.9rem; color: #66717a; font-size: 0.54rem; }
-      .alert { padding: 0.85rem 0.9rem; border-left: 2px solid #d69a42; border-bottom: 1px solid #22282e; background: rgb(214 154 66 / 5%); }
+      .state strong { display: block; overflow: hidden; color: #d4dade; font-size: 0.7rem; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
+      .state small { display: block; overflow: hidden; margin-top: 0.2rem; color: #87919a; font-size: 0.6875rem; text-overflow: ellipsis; white-space: nowrap; }
+      .state b { color: #939da5; font-size: 0.6875rem; font-weight: 400; text-transform: uppercase; }
+      .alerts-empty { padding: 1.3rem 0.9rem; color: #89939c; font-size: 0.68rem; line-height: 1.5; }
+      .alert { padding: 0.85rem 0.9rem; border-left: 1px solid #d69a42; border-bottom: 1px solid #22282e; background: rgb(214 154 66 / 5%); }
       .alert:last-child { border-bottom: 0; }
-      .alert strong { display: block; color: #e5bf84; font-size: 0.56rem; font-weight: 500; }
-      .alert small { display: block; margin-top: 0.3rem; color: #736958; font-size: 0.47rem; }
-      .error-banner { display: none; margin-top: 0.9rem; padding: 0.9rem; border: 1px solid #79353b; background: #211114; color: #e68b93; font-size: 0.58rem; }
+      .alert strong { display: block; color: #e5bf84; font-size: 0.7rem; font-weight: 500; }
+      .alert small { display: block; margin-top: 0.3rem; color: #bca37d; font-size: 0.6875rem; }
+      .error-banner { display: none; margin-top: 0.9rem; padding: 0.9rem; border: 1px solid #79353b; background: #211114; color: #f1a5ab; font-size: 0.7rem; line-height: 1.55; }
       .error-banner.visible { display: block; }
-      .skeleton { position: relative; overflow: hidden; color: transparent !important; background: #151a20; }
-      .skeleton::after { position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgb(255 255 255 / 4%), transparent); content: ""; animation: scan 1.4s infinite; }
-      @keyframes scan { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
-      @media (max-width: 68rem) { .summary { grid-template-columns: repeat(3, 1fr); } .metric:nth-child(4) { border-left: 0; border-top: 1px solid #252b31; } .metric:nth-child(n + 4) { border-top: 1px solid #252b31; } .dashboard { grid-template-columns: 1fr; } .chart-panel { grid-column: auto; } }
-      @media (max-width: 50rem) { .shell { grid-template-columns: 1fr; } aside { position: static; display: flex; flex-direction: row; justify-content: space-between; height: auto; border-right: 0; border-bottom: 1px solid #252b31; } nav { display: none; } .connection { margin: 0; text-align: right; } }
-      @media (max-width: 35rem) { main { padding: 1rem; } header { align-items: end; } .refresh span { display: none; } .summary { grid-template-columns: repeat(2, 1fr); } .metric:nth-child(3) { border-left: 0; } .metric:nth-child(n + 3) { border-top: 1px solid #252b31; } .protocols { grid-template-columns: 1fr; } .protocol:nth-child(odd) { border-right: 0; } }
-      @media (prefers-reduced-motion: reduce) { .skeleton::after { animation: none; } }
+      .telemetry-unavailable .summary, .telemetry-unavailable .dashboard { opacity: 0.72; }
+      .skeleton { color: transparent !important; background: #151a20; }
+      @keyframes rotate { to { transform: rotate(360deg); } }
+      @media (max-width: 68rem) { .summary { grid-template-columns: repeat(6, 1fr); } .metric { grid-column: span 2; } .metric:nth-child(4), .metric:nth-child(5) { grid-column: span 3; border-top: 1px solid #252b31; } .metric:nth-child(4) { padding-left: 0; border-left: 0; } .dashboard { grid-template-columns: 1fr; } .chart-panel { grid-column: auto; } }
+      @media (max-width: 50rem) { .shell { grid-template-columns: 1fr; } aside { z-index: 3; display: grid; grid-template-columns: minmax(0, 1fr) auto; height: auto; padding: 1rem clamp(1rem, 4vw, 1.4rem) 0; border-right: 0; border-bottom: 1px solid #252b31; } nav { display: flex; grid-column: 1 / -1; gap: 0; margin: 0.75rem -0.25rem 0; overflow-x: auto; scrollbar-width: none; } nav::-webkit-scrollbar { display: none; } nav a { flex: 0 0 auto; padding-inline: 0.75rem; border-bottom: 1px solid transparent; border-left: 0; } nav a:first-child { border-bottom-color: #8d70db; background: linear-gradient(0deg, rgb(113 73 221 / 15%), transparent); } .connection { margin: 0; align-self: center; text-align: right; } }
+      @media (max-width: 35rem) { main { padding: 1rem; } header { align-items: end; } .refresh { width: 2.75rem; padding: 0; justify-content: center; } .refresh span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; } .summary { grid-template-columns: repeat(2, 1fr); } .metric { grid-column: auto; } .metric:nth-child(n) { border-top: 0; } .metric:nth-child(n + 3) { border-top: 1px solid #252b31; } .metric:nth-child(odd) { padding-left: 0; border-left: 0; } .metric:last-child { grid-column: 1 / -1; } .panel-head { gap: 1rem; } .panel-head span { max-width: 14rem; } .protocols { grid-template-columns: 1fr; } .protocol:nth-child(odd) { border-right: 0; } }
+      @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .refresh:disabled svg { animation: none; } }
+      @media (forced-colors: active) { .connection i, .state-dot, .protocol i { border: 1px solid currentColor; } }
     </style>
   </head>
   <body>
+    <a class="skip-link" href="#overview">Skip to live overview</a>
     <div class="shell">
       <aside>
         <div class="brand"><span class="brand-mark">AS</span><span>218822<small>live operations</small></span></div>
         <nav aria-label="Console navigation"><a href="#overview">Overview</a><a href="#sessions">BGP sessions</a><a href="#infrastructure">Infrastructure</a><a href="#alerts">Alerts</a></nav>
-        <div class="connection"><strong><i id="connection-dot"></i><span id="connection-state">Connecting</span></strong><span id="updated-at">Awaiting telemetry</span></div>
+        <div class="connection" role="status" aria-live="polite"><strong><i id="connection-dot" aria-hidden="true"></i><span id="connection-state">Connecting</span></strong><span id="updated-at">Awaiting telemetry</span></div>
       </aside>
 
       <main id="overview">
         <header>
-          <div><p class="kicker">Live telemetry / Prometheus</p><h1>Network<br />operations</h1></div>
-          <button class="refresh" id="refresh" type="button" aria-label="Refresh monitoring data"><span>Refresh data</span> <b aria-hidden="true">&#8635;</b></button>
+          <h1>Network<br />operations</h1>
+          <button class="refresh" id="refresh" type="button"><span>Refresh data</span><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M13.25 4.75V1.5m0 3.25H10M13.05 8a5.25 5.25 0 1 1-1.12-3.24" stroke="currentColor" stroke-width="1.4" stroke-linecap="square" /></svg></button>
         </header>
         <div class="error-banner" id="error" role="alert"></div>
 
@@ -118,21 +126,21 @@ import "@fontsource/ibm-plex-mono/600.css";
 
           <section class="panel" id="sessions">
             <div class="panel-head"><h2>BGP sessions</h2><span id="session-count">Live state</span></div>
-            <div class="protocols" id="protocols"><div class="alerts-empty">Loading sessions...</div></div>
+            <div class="protocols" id="protocols" role="list"><div class="alerts-empty">Loading sessions...</div></div>
           </section>
 
           <div class="stack" id="infrastructure">
             <section class="panel">
               <div class="panel-head"><h2>IPv6 probes</h2><span>External reachability</span></div>
-              <div class="states" id="probes"><div class="alerts-empty">Loading probes...</div></div>
+              <div class="states" id="probes" role="list"><div class="alerts-empty">Loading probes...</div></div>
             </section>
             <section class="panel">
               <div class="panel-head"><h2>Workloads</h2><span id="workload-count">Kubernetes</span></div>
-              <div class="states" id="workloads"><div class="alerts-empty">Loading workloads...</div></div>
+              <div class="states" id="workloads" role="list"><div class="alerts-empty">Loading workloads...</div></div>
             </section>
             <section class="panel" id="alerts">
               <div class="panel-head"><h2>Active alerts</h2><span>Prometheus rules</span></div>
-              <div id="alerts-list"><div class="alerts-empty">Loading alerts...</div></div>
+              <div id="alerts-list" role="list"><div class="alerts-empty">Loading alerts...</div></div>
             </section>
           </div>
         </div>
@@ -144,6 +152,7 @@ import "@fontsource/ibm-plex-mono/600.css";
       const elements = Object.fromEntries(["bgp-summary", "router-summary", "container-summary", "alert-summary", "vrp-summary", "connection-dot", "connection-state", "updated-at", "refresh", "error", "chart-wrap", "protocols", "session-count", "probes", "workloads", "workload-count", "alerts-list"].map((id) => [id, document.getElementById(id)]));
       const escapeHtml = (value) => String(value ?? "").replace(/[&<>'"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[character]);
       const label = (value) => String(value ?? "unknown").replace(/_/g, " ");
+      let hasData = false;
 
       function setMetric(id, value, warning = false) {
         const element = elements[id];
@@ -170,6 +179,8 @@ import "@fontsource/ibm-plex-mono/600.css";
       }
 
       function render(data) {
+        hasData = true;
+        document.body.classList.remove("telemetry-unavailable");
         const summary = data.summary;
         setMetric("bgp-summary", `${summary.bgpUp} / ${summary.bgpTotal}`, summary.bgpUp < summary.bgpTotal);
         setMetric("router-summary", `${summary.routersUp} / ${summary.routersTotal}`, summary.routersUp < summary.routersTotal);
@@ -183,28 +194,42 @@ import "@fontsource/ibm-plex-mono/600.css";
 
         const bgp = data.protocols.filter((protocol) => protocol.type === "BGP");
         elements["session-count"].textContent = `${summary.bgpUp} of ${summary.bgpTotal} established`;
-        elements.protocols.innerHTML = bgp.map((protocol) => `<div class="protocol ${protocol.up ? "up" : ""}"><i></i><span><strong>${escapeHtml(label(protocol.name))}</strong><small>${escapeHtml(protocol.location)}</small></span><em>${protocol.up ? "Established" : "Down"}</em></div>`).join("");
-        elements.probes.innerHTML = data.reachability.map((probe) => `<div class="state"><i class="state-dot ${probe.reachable ? "up" : ""}"></i><span><strong>${escapeHtml(probe.target)}</strong><small>${escapeHtml(probe.location)}</small></span><b>${probe.reachable ? "Reachable" : "Failed"}</b></div>`).join("") || '<div class="alerts-empty">No probes configured.</div>';
+        elements.protocols.innerHTML = bgp.map((protocol) => `<div class="protocol ${protocol.up ? "up" : ""}" role="listitem"><i aria-hidden="true"></i><span><strong>${escapeHtml(label(protocol.name))}</strong><small>${escapeHtml(protocol.location)}</small></span><em>${protocol.up ? "Established" : "Down"}</em></div>`).join("") || '<div class="alerts-empty">No BGP sessions configured.</div>';
+        elements.probes.innerHTML = data.reachability.map((probe) => `<div class="state" role="listitem"><i class="state-dot ${probe.reachable ? "up" : ""}" aria-hidden="true"></i><span><strong>${escapeHtml(probe.target)}</strong><small>${escapeHtml(probe.location)}</small></span><b>${probe.reachable ? "Reachable" : "Failed"}</b></div>`).join("") || '<div class="alerts-empty">No probes configured.</div>';
         elements["workload-count"].textContent = `${summary.containersReady} of ${summary.containersTotal} ready`;
-        elements.workloads.innerHTML = data.containers.map((container) => `<div class="state"><i class="state-dot ${container.ready ? "up" : ""}"></i><span><strong>${escapeHtml(label(container.name))}</strong><small>${escapeHtml(container.pod)}</small></span><b>${container.ready ? "Ready" : "Not ready"}</b></div>`).join("");
-        elements["alerts-list"].innerHTML = data.alerts.length ? data.alerts.map((alert) => `<div class="alert"><strong>${escapeHtml(label(alert.name))}</strong><small>${escapeHtml([alert.severity, alert.location, label(alert.protocol)].filter(Boolean).join(" / "))}</small></div>`).join("") : '<div class="alerts-empty">No active AS218822 alerts.</div>';
+        elements.workloads.innerHTML = data.containers.map((container) => `<div class="state" role="listitem"><i class="state-dot ${container.ready ? "up" : ""}" aria-hidden="true"></i><span><strong>${escapeHtml(label(container.name))}</strong><small>${escapeHtml(container.pod)}</small></span><b>${container.ready ? "Ready" : "Not ready"}</b></div>`).join("") || '<div class="alerts-empty">No workloads reported.</div>';
+        elements["alerts-list"].innerHTML = data.alerts.length ? data.alerts.map((alert) => `<div class="alert" role="listitem"><strong>${escapeHtml(label(alert.name))}</strong><small>${escapeHtml([alert.severity, alert.location, label(alert.protocol)].filter(Boolean).join(" / "))}</small></div>`).join("") : '<div class="alerts-empty">No active AS218822 alerts.</div>';
         drawHistory(data.history);
       }
 
       async function refresh() {
         elements.refresh.disabled = true;
+        elements.refresh.setAttribute("aria-busy", "true");
         try {
           const response = await fetch("/api/status", { cache: "no-store" });
-          const data = await response.json();
-          if (!response.ok) throw new Error(data.error || `Monitoring request failed (${response.status})`);
+          const isJson = response.headers.get("content-type")?.includes("application/json");
+          const data = isJson ? await response.json() : null;
+          if (!response.ok) throw new Error(data?.error || `Monitoring service returned ${response.status}.`);
+          if (!data) throw new Error("Monitoring service returned an unreadable response.");
           render(data);
         } catch (error) {
+          document.body.classList.add("telemetry-unavailable");
           elements["connection-dot"].classList.remove("online");
           elements["connection-state"].textContent = "Telemetry unavailable";
-          elements.error.textContent = error instanceof Error ? error.message : "Monitoring data is unavailable.";
+          elements["updated-at"].textContent = hasData ? "Showing last successful update" : "No current telemetry";
+          elements.error.textContent = `${error instanceof Error ? error.message : "Monitoring data is unavailable."} Try refreshing in a moment.`;
           elements.error.classList.add("visible");
+          if (!hasData) {
+            ["bgp-summary", "router-summary", "container-summary", "alert-summary", "vrp-summary"].forEach((id) => setMetric(id, "--"));
+            elements["chart-wrap"].innerHTML = '<div class="chart-empty">History unavailable until telemetry reconnects.</div>';
+            elements.protocols.innerHTML = '<div class="alerts-empty">Session state unavailable.</div>';
+            elements.probes.innerHTML = '<div class="alerts-empty">Probe state unavailable.</div>';
+            elements.workloads.innerHTML = '<div class="alerts-empty">Workload state unavailable.</div>';
+            elements["alerts-list"].innerHTML = '<div class="alerts-empty">Alert state unavailable.</div>';
+          }
         } finally {
           elements.refresh.disabled = false;
+          elements.refresh.removeAttribute("aria-busy");
         }
       }
 
