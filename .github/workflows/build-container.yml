@@ -76,13 +76,13 @@ jobs:
             platform: linux/arm64
             runner: ubuntu-24.04-arm
           - component: console
-            image: console
+            image: as218822-console
             context: console
             architecture: amd64
             platform: linux/amd64
             runner: ubuntu-24.04
           - component: console
-            image: console
+            image: as218822-console
             context: console
             architecture: arm64
             platform: linux/arm64
@@ -171,7 +171,7 @@ jobs:
           - component: looking-glass
             image: as218822-looking-glass
           - component: console
-            image: console
+            image: as218822-console
     runs-on: ubuntu-24.04
     steps:
       - name: Download image digests
