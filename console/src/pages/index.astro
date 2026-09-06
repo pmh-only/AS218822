@@ -44,7 +44,7 @@ import "@fontsource/ibm-plex-mono/600.css";
       .refresh:hover { border-color: #8065c7; background: #15131d; color: white; }
       .refresh:disabled { cursor: wait; opacity: 0.65; }
       .refresh:disabled svg { animation: rotate 900ms linear infinite; }
-      .summary { display: grid; grid-template-columns: repeat(5, 1fr); border-bottom: 1px solid #252b31; }
+      .summary { display: grid; grid-template-columns: repeat(6, 1fr); border-bottom: 1px solid #252b31; }
       .metric { min-width: 0; padding: 1.35rem 1rem 1.35rem 0; }
       .metric + .metric { padding-left: 1.2rem; border-left: 1px solid #252b31; }
       .metric span { color: #89939c; font-size: 0.6875rem; letter-spacing: 0.06em; text-transform: uppercase; }
@@ -62,6 +62,8 @@ import "@fontsource/ibm-plex-mono/600.css";
       .chart-area { fill: url(#area); }
       .chart-line { fill: none; stroke: #8866df; stroke-width: 2; vector-effect: non-scaling-stroke; }
       .chart-empty { display: grid; height: 100%; place-items: center; color: #89939c; font-size: 0.7rem; text-align: center; }
+      .chart-detail { display: flex; justify-content: space-between; gap: 1rem; padding: 0 1rem 0.9rem; color: #89939c; font-size: 0.65rem; font-variant-numeric: tabular-nums; text-transform: uppercase; }
+      .chart-detail strong { color: #b9a6ea; font-weight: 500; }
       .protocols { display: grid; grid-template-columns: repeat(2, 1fr); }
       .protocol { display: grid; grid-template-columns: 0.65rem minmax(0, 1fr) auto; gap: 0.65rem; align-items: center; min-width: 0; padding: 0.85rem 0.9rem; border-bottom: 1px solid #22282e; }
       .protocol:nth-child(odd) { border-right: 1px solid #22282e; }
@@ -84,12 +86,29 @@ import "@fontsource/ibm-plex-mono/600.css";
       .alert small { display: block; margin-top: 0.3rem; color: #bca37d; font-size: 0.6875rem; }
       .error-banner { display: none; margin-top: 0.9rem; padding: 0.9rem; border: 1px solid #79353b; background: #211114; color: #f1a5ab; font-size: 0.7rem; line-height: 1.55; }
       .error-banner.visible { display: block; }
+      .traffic { display: grid; }
+      .traffic-row { display: grid; grid-template-columns: minmax(8rem, 0.7fr) minmax(12rem, 1.3fr) repeat(2, minmax(6rem, auto)); gap: 1rem; align-items: center; padding: 0.8rem 0.9rem; border-bottom: 1px solid #22282e; }
+      .traffic-row:last-child { border-bottom: 0; }
+      .traffic-row strong { overflow: hidden; color: #d4dade; font-size: 0.7rem; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
+      .traffic-row span { color: #9aa4ac; font-size: 0.6875rem; font-variant-numeric: tabular-nums; text-align: right; }
+      .traffic-track { display: grid; grid-template-columns: var(--in, 0fr) var(--out, 0fr); gap: 2px; height: 0.3rem; background: #1d2329; }
+      .traffic-track i:first-child { background: #8866df; }
+      .traffic-track i:last-child { background: #429d79; }
+      .traffic-key { display: flex; gap: 0.9rem; }
+      .traffic-key i { display: inline-block; width: 0.4rem; height: 0.4rem; margin-right: 0.35rem; background: #8866df; }
+      .traffic-key span:last-child i { background: #429d79; }
+      .profile { display: grid; grid-template-columns: repeat(4, 1fr); }
+      .profile-item { min-width: 0; padding: 0.9rem; border-right: 1px solid #22282e; }
+      .profile-item:last-child { border-right: 0; }
+      .profile-item span { display: block; color: #7f8992; font-size: 0.62rem; letter-spacing: 0.06em; text-transform: uppercase; }
+      .profile-item strong, .profile-item a { display: block; margin-top: 0.45rem; overflow: hidden; color: #d4dade; font-size: 0.7rem; font-weight: 500; text-decoration: none; text-overflow: ellipsis; white-space: nowrap; }
+      .profile-item a:hover { color: #b9a6ea; text-decoration: underline; text-underline-offset: 0.25rem; }
       .telemetry-unavailable .summary, .telemetry-unavailable .dashboard { opacity: 0.72; }
       .skeleton { color: transparent !important; background: #151a20; }
       @keyframes rotate { to { transform: rotate(360deg); } }
-      @media (max-width: 68rem) { .summary { grid-template-columns: repeat(6, 1fr); } .metric { grid-column: span 2; } .metric:nth-child(4), .metric:nth-child(5) { grid-column: span 3; border-top: 1px solid #252b31; } .metric:nth-child(4) { padding-left: 0; border-left: 0; } .dashboard { grid-template-columns: 1fr; } .chart-panel { grid-column: auto; } }
+      @media (max-width: 68rem) { .summary { grid-template-columns: repeat(3, 1fr); } .metric:nth-child(n + 4) { border-top: 1px solid #252b31; } .metric:nth-child(4) { padding-left: 0; border-left: 0; } .dashboard { grid-template-columns: 1fr; } .chart-panel { grid-column: auto; } }
       @media (max-width: 50rem) { .shell { grid-template-columns: 1fr; } aside { z-index: 3; display: grid; grid-template-columns: minmax(0, 1fr) auto; height: auto; padding: 1rem clamp(1rem, 4vw, 1.4rem) 0; border-right: 0; border-bottom: 1px solid #252b31; } nav { display: flex; grid-column: 1 / -1; gap: 0; margin: 0.75rem -0.25rem 0; overflow-x: auto; scrollbar-width: none; } nav::-webkit-scrollbar { display: none; } nav a { flex: 0 0 auto; padding-inline: 0.75rem; border-bottom: 1px solid transparent; border-left: 0; } nav a:first-child { border-bottom-color: #8d70db; background: linear-gradient(0deg, rgb(113 73 221 / 15%), transparent); } .connection { margin: 0; align-self: center; text-align: right; } }
-      @media (max-width: 35rem) { main { padding: 1rem; } header { align-items: end; } .refresh { width: 2.75rem; padding: 0; justify-content: center; } .refresh span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; } .summary { grid-template-columns: repeat(2, 1fr); } .metric { grid-column: auto; } .metric:nth-child(n) { border-top: 0; } .metric:nth-child(n + 3) { border-top: 1px solid #252b31; } .metric:nth-child(odd) { padding-left: 0; border-left: 0; } .metric:last-child { grid-column: 1 / -1; } .panel-head { gap: 1rem; } .panel-head span { max-width: 14rem; } .protocols { grid-template-columns: 1fr; } .protocol:nth-child(odd) { border-right: 0; } }
+      @media (max-width: 35rem) { main { padding: 1rem; } header { align-items: end; } .refresh { width: 2.75rem; padding: 0; justify-content: center; } .refresh span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; } .summary { grid-template-columns: repeat(2, 1fr); } .metric:nth-child(n) { padding-left: 1.2rem; border-top: 0; border-left: 1px solid #252b31; } .metric:nth-child(n + 3) { border-top: 1px solid #252b31; } .metric:nth-child(odd) { padding-left: 0; border-left: 0; } .panel-head { gap: 1rem; } .panel-head span { max-width: 14rem; } .protocols { grid-template-columns: 1fr; } .protocol:nth-child(odd) { border-right: 0; } .traffic-row { grid-template-columns: minmax(0, 1fr) auto auto; gap: 0.75rem; } .traffic-track { grid-column: 1 / -1; grid-row: 2; } .profile { grid-template-columns: repeat(2, 1fr); } .profile-item:nth-child(2) { border-right: 0; } .profile-item:nth-child(n + 3) { border-top: 1px solid #22282e; } }
       @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .refresh:disabled svg { animation: none; } }
       @media (forced-colors: active) { .connection i, .state-dot, .protocol i { border: 1px solid currentColor; } }
     </style>
@@ -99,7 +118,7 @@ import "@fontsource/ibm-plex-mono/600.css";
     <div class="shell">
       <aside>
         <div class="brand"><span class="brand-mark">AS</span><span>218822<small>live operations</small></span></div>
-        <nav aria-label="Console navigation"><a href="#overview">Overview</a><a href="#sessions">BGP sessions</a><a href="#infrastructure">Infrastructure</a><a href="#alerts">Alerts</a></nav>
+        <nav aria-label="Console navigation"><a href="#overview">Overview</a><a href="#sessions">BGP sessions</a><a href="#traffic">Traffic</a><a href="#infrastructure">Infrastructure</a><a href="#alerts">Alerts</a></nav>
         <div class="connection" role="status" aria-live="polite"><strong><i id="connection-dot" aria-hidden="true"></i><span id="connection-state">Connecting</span></strong><span id="updated-at">Awaiting telemetry</span></div>
       </aside>
 
@@ -116,18 +135,26 @@ import "@fontsource/ibm-plex-mono/600.css";
           <div class="metric"><span>Containers ready</span><strong id="container-summary" class="skeleton">-- / --</strong></div>
           <div class="metric"><span>Active alerts</span><strong id="alert-summary" class="skeleton">--</strong></div>
           <div class="metric"><span>Validated VRPs</span><strong id="vrp-summary" class="skeleton">--</strong></div>
+          <div class="metric"><span>Current traffic</span><strong id="traffic-summary" class="skeleton">--</strong></div>
         </section>
 
         <div class="dashboard">
           <section class="panel chart-panel">
             <div class="panel-head"><h2>BGP availability</h2><span>Last 6 hours / 5 minute resolution</span></div>
             <div class="chart-wrap" id="chart-wrap"><div class="chart-empty">Loading history...</div></div>
+            <div class="chart-detail" id="chart-detail"><span>Oldest sample</span><strong>Awaiting samples</strong><span>Latest sample</span></div>
           </section>
 
-          <section class="panel" id="sessions">
-            <div class="panel-head"><h2>BGP sessions</h2><span id="session-count">Live state</span></div>
-            <div class="protocols" id="protocols" role="list"><div class="alerts-empty">Loading sessions...</div></div>
-          </section>
+          <div class="stack">
+            <section class="panel" id="sessions">
+              <div class="panel-head"><h2>BGP sessions</h2><span id="session-count">Live state</span></div>
+              <div class="protocols" id="protocols" role="list"><div class="alerts-empty">Loading sessions...</div></div>
+            </section>
+            <section class="panel" id="traffic">
+              <div class="panel-head"><h2>Overlay traffic</h2><span class="traffic-key"><span><i></i>Inbound</span><span><i></i>Outbound</span></span></div>
+              <div class="traffic" id="traffic-list"><div class="alerts-empty">Loading traffic rates...</div></div>
+            </section>
+          </div>
 
           <div class="stack" id="infrastructure">
             <section class="panel">
@@ -143,15 +170,32 @@ import "@fontsource/ibm-plex-mono/600.css";
               <div id="alerts-list" role="list"><div class="alerts-empty">Loading alerts...</div></div>
             </section>
           </div>
+
+          <section class="panel chart-panel" aria-labelledby="profile-title">
+            <div class="panel-head"><h2 id="profile-title">Network registry</h2><span>Public routing identity</span></div>
+            <div class="profile">
+              <div class="profile-item"><span>Address family</span><strong>IPv6 only</strong></div>
+              <div class="profile-item"><span>Origin prefix</span><strong>2a06:9801:ff0::/44</strong></div>
+              <div class="profile-item"><span>Peering policy</span><a href="https://as218822.net/peering/">Open policy</a></div>
+              <div class="profile-item"><span>Registry</span><a href="https://www.peeringdb.com/net/43433">PeeringDB #43433</a></div>
+            </div>
+          </section>
         </div>
       </main>
     </div>
 
     <script>
       // @ts-nocheck
-      const elements = Object.fromEntries(["bgp-summary", "router-summary", "container-summary", "alert-summary", "vrp-summary", "connection-dot", "connection-state", "updated-at", "refresh", "error", "chart-wrap", "protocols", "session-count", "probes", "workloads", "workload-count", "alerts-list"].map((id) => [id, document.getElementById(id)]));
+      const elements = Object.fromEntries(["bgp-summary", "router-summary", "container-summary", "alert-summary", "vrp-summary", "traffic-summary", "connection-dot", "connection-state", "updated-at", "refresh", "error", "chart-wrap", "chart-detail", "protocols", "session-count", "traffic-list", "probes", "workloads", "workload-count", "alerts-list"].map((id) => [id, document.getElementById(id)]));
       const escapeHtml = (value) => String(value ?? "").replace(/[&<>'"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[character]);
       const label = (value) => String(value ?? "unknown").replace(/_/g, " ");
+      const rate = (bytes) => {
+        const bits = Math.max(0, Number(bytes) || 0) * 8;
+        const units = ["bps", "Kbps", "Mbps", "Gbps"];
+        const tier = Math.min(Math.floor(Math.log10(Math.max(bits, 1)) / 3), units.length - 1);
+        return `${(bits / (1000 ** tier)).toLocaleString("en", { maximumFractionDigits: tier ? 1 : 0 })} ${units[tier]}`;
+      };
+      const sampleTime = (value) => new Date(value).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
       let hasData = false;
 
       function setMetric(id, value, warning = false) {
@@ -164,6 +208,7 @@ import "@fontsource/ibm-plex-mono/600.css";
       function drawHistory(history) {
         if (!history.length) {
           elements["chart-wrap"].innerHTML = '<div class="chart-empty">No historical samples available.</div>';
+          elements["chart-detail"].innerHTML = '<span>6 hour window</span><strong>No samples</strong><span>5 minute resolution</span>';
           return;
         }
         const width = 1000;
@@ -176,6 +221,8 @@ import "@fontsource/ibm-plex-mono/600.css";
         }).join(" ");
         const area = `0,${height} ${points} ${width},${height}`;
         elements["chart-wrap"].innerHTML = `<svg id="history-chart" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" role="img" aria-label="BGP sessions up over the last six hours"><defs><linearGradient id="area" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7956d3" stop-opacity=".35"/><stop offset="1" stop-color="#7956d3" stop-opacity="0"/></linearGradient></defs><line class="chart-grid" x1="0" y1="${height / 2}" x2="${width}" y2="${height / 2}"/><polygon class="chart-area" points="${area}"/><polyline class="chart-line" points="${points}"/></svg>`;
+        const latest = history.at(-1);
+        elements["chart-detail"].innerHTML = `<span>${sampleTime(history[0].timestamp)}</span><strong>${latest.up} / ${latest.total} established now</strong><span>${sampleTime(latest.timestamp)}</span>`;
       }
 
       function render(data) {
@@ -187,6 +234,8 @@ import "@fontsource/ibm-plex-mono/600.css";
         setMetric("container-summary", `${summary.containersReady} / ${summary.containersTotal}`, summary.containersReady < summary.containersTotal);
         setMetric("alert-summary", String(summary.activeAlerts), summary.activeAlerts > 0);
         setMetric("vrp-summary", summary.vrps === null ? "N/A" : new Intl.NumberFormat("en").format(summary.vrps));
+        const totalTraffic = data.traffic.reduce((total, item) => total + item.bytesPerSecond, 0);
+        setMetric("traffic-summary", rate(totalTraffic));
         elements["connection-dot"].classList.add("online");
         elements["connection-state"].textContent = "Telemetry online";
         elements["updated-at"].textContent = `Updated ${new Date(data.generatedAt).toLocaleTimeString([], { hour12: false })}`;
@@ -194,7 +243,15 @@ import "@fontsource/ibm-plex-mono/600.css";
 
         const bgp = data.protocols.filter((protocol) => protocol.type === "BGP");
         elements["session-count"].textContent = `${summary.bgpUp} of ${summary.bgpTotal} established`;
-        elements.protocols.innerHTML = bgp.map((protocol) => `<div class="protocol ${protocol.up ? "up" : ""}" role="listitem"><i aria-hidden="true"></i><span><strong>${escapeHtml(label(protocol.name))}</strong><small>${escapeHtml(protocol.location)}</small></span><em>${protocol.up ? "Established" : "Down"}</em></div>`).join("") || '<div class="alerts-empty">No BGP sessions configured.</div>';
+        elements.protocols.innerHTML = bgp.map((protocol) => `<div class="protocol ${protocol.up ? "up" : ""}" role="listitem"><i aria-hidden="true"></i><span><strong>${escapeHtml(label(protocol.name))}</strong><small>${escapeHtml(protocol.location)} / sampled ${sampleTime(protocol.observedAt)}</small></span><em>${protocol.up ? "Established" : "Down"}</em></div>`).join("") || '<div class="alerts-empty">No BGP sessions configured.</div>';
+        const trafficByPod = new Map();
+        for (const item of data.traffic) {
+          const pod = trafficByPod.get(item.pod) ?? { in: 0, out: 0 };
+          pod[item.direction === "out" ? "out" : "in"] += item.bytesPerSecond;
+          trafficByPod.set(item.pod, pod);
+        }
+        const peakTraffic = Math.max(...[...trafficByPod.values()].map((item) => item.in + item.out), 1);
+        elements["traffic-list"].innerHTML = [...trafficByPod].sort(([a], [b]) => a.localeCompare(b)).map(([pod, traffic]) => `<div class="traffic-row"><strong>${escapeHtml(pod)}</strong><div class="traffic-track" style="--in:${traffic.in / peakTraffic}fr;--out:${traffic.out / peakTraffic}fr" aria-hidden="true"><i></i><i></i></div><span>IN ${rate(traffic.in)}</span><span>OUT ${rate(traffic.out)}</span></div>`).join("") || '<div class="alerts-empty">No overlay traffic samples reported.</div>';
         elements.probes.innerHTML = data.reachability.map((probe) => `<div class="state" role="listitem"><i class="state-dot ${probe.reachable ? "up" : ""}" aria-hidden="true"></i><span><strong>${escapeHtml(probe.target)}</strong><small>${escapeHtml(probe.location)}</small></span><b>${probe.reachable ? "Reachable" : "Failed"}</b></div>`).join("") || '<div class="alerts-empty">No probes configured.</div>';
         elements["workload-count"].textContent = `${summary.containersReady} of ${summary.containersTotal} ready`;
         elements.workloads.innerHTML = data.containers.map((container) => `<div class="state" role="listitem"><i class="state-dot ${container.ready ? "up" : ""}" aria-hidden="true"></i><span><strong>${escapeHtml(label(container.name))}</strong><small>${escapeHtml(container.pod)}</small></span><b>${container.ready ? "Ready" : "Not ready"}</b></div>`).join("") || '<div class="alerts-empty">No workloads reported.</div>';
@@ -220,9 +277,10 @@ import "@fontsource/ibm-plex-mono/600.css";
           elements.error.textContent = `${error instanceof Error ? error.message : "Monitoring data is unavailable."} Try refreshing in a moment.`;
           elements.error.classList.add("visible");
           if (!hasData) {
-            ["bgp-summary", "router-summary", "container-summary", "alert-summary", "vrp-summary"].forEach((id) => setMetric(id, "--"));
+            ["bgp-summary", "router-summary", "container-summary", "alert-summary", "vrp-summary", "traffic-summary"].forEach((id) => setMetric(id, "--"));
             elements["chart-wrap"].innerHTML = '<div class="chart-empty">History unavailable until telemetry reconnects.</div>';
             elements.protocols.innerHTML = '<div class="alerts-empty">Session state unavailable.</div>';
+            elements["traffic-list"].innerHTML = '<div class="alerts-empty">Traffic rates unavailable.</div>';
             elements.probes.innerHTML = '<div class="alerts-empty">Probe state unavailable.</div>';
             elements.workloads.innerHTML = '<div class="alerts-empty">Workload state unavailable.</div>';
             elements["alerts-list"].innerHTML = '<div class="alerts-empty">Alert state unavailable.</div>';
