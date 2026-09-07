@@ -10,4 +10,4 @@ is_rs_peer: true
 bfd_support: false
 operational: true
 net_side_id: null
-ix_side_id: null
+ix_side_id: 5678
