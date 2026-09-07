@@ -32,6 +32,7 @@ import {
 } from "@carbon/react";
 import { Renew } from "@carbon/icons-react";
 import { LineChart } from "@carbon/charts-react";
+import NetworkTopology from "./NetworkTopology.jsx";
 
 const sessionHeaders = [
   { key: "name", header: "Session" },
@@ -164,6 +165,7 @@ export default function Dashboard() {
         <HeaderName href="#overview" prefix="AS218822">Network console</HeaderName>
         <HeaderNavigation aria-label="Network console navigation">
           <HeaderMenuItem href="#overview">Overview</HeaderMenuItem>
+          <HeaderMenuItem href="#topology">Topology</HeaderMenuItem>
           <HeaderMenuItem href="#graphs">Graphs</HeaderMenuItem>
           <HeaderMenuItem href="#sessions">Sessions</HeaderMenuItem>
           <HeaderMenuItem href="#infrastructure">Infrastructure</HeaderMenuItem>
@@ -196,6 +198,20 @@ export default function Dashboard() {
             <Column sm={2} md={2} lg={2}>{summary ? <MetricTile label="Pods" value={`${summary.containersReady} / ${summary.containersTotal}`} detail="Ready" progress={containerPercent} /> : <Tile><SkeletonText heading /></Tile>}</Column>
             <Column sm={2} md={2} lg={2}>{summary ? <MetricTile label="Alerts" value={String(summary.activeAlerts)} detail="Firing rules" status={summary.activeAlerts ? "Action required" : "Clear"} statusType={summary.activeAlerts ? "red" : "green"} /> : <Tile><SkeletonText heading /></Tile>}</Column>
             <Column sm={2} md={2} lg={2}>{summary ? <MetricTile label="RPKI" value={summary.vrps === null ? "N/A" : new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 2 }).format(summary.vrps)} detail="VRPs" /> : <Tile><SkeletonText heading /></Tile>}</Column>
+          </Grid>
+
+          <Grid fullWidth id="topology">
+            <Column sm={4} md={8} lg={16}>
+              <Tile>
+                <Stack gap={4}>
+                  <div>
+                    <h2 className="cds--type-heading-04">Live BGP topology</h2>
+                    <p className="cds--type-helper-text-01">Logical routing relationships derived from current BGP session telemetry.</p>
+                  </div>
+                  {data ? <NetworkTopology protocols={data.protocols} /> : <SkeletonText paragraph lineCount={10} />}
+                </Stack>
+              </Tile>
+            </Column>
           </Grid>
 
           <Grid fullWidth id="graphs">
