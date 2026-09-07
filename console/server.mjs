@@ -14,7 +14,7 @@ let cacheExpires = 0;
 let statusPromise;
 
 const securityHeaders = {
-  "content-security-policy": "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' https://trace.pmh.codes; img-src 'self' data:; connect-src 'self' https://trace.pmh.codes",
+  "content-security-policy": "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' https://trace.pmh.codes; font-src 'self' https://1.www.s81c.com; img-src 'self' data:; connect-src 'self' https://trace.pmh.codes",
   "referrer-policy": "no-referrer",
   "x-content-type-options": "nosniff",
   "x-frame-options": "DENY",

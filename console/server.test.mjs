@@ -82,6 +82,7 @@ test("serves constrained live monitoring data", async (context) => {
   const response = await fetch(`http://127.0.0.1:${consolePort}/api/status`);
   assert.equal(response.status, 200);
   assert.match(response.headers.get("content-security-policy"), /trace\.pmh\.codes/);
+  assert.match(response.headers.get("content-security-policy"), /1\.www\.s81c\.com/);
   const body = await response.json();
   assert.deepEqual(body.summary, {
     bgpUp: 1,
