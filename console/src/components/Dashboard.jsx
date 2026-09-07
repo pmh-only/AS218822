@@ -171,48 +171,54 @@ export default function Dashboard() {
       </Header>
 
       <Content id="main-content">
-        <Grid fullWidth id="overview">
-          <Column sm={4} md={6} lg={12}>
-            <Stack gap={3}>
-              <p className="cds--type-label-01">PUBLIC TELEMETRY / IPV6 AUTONOMOUS SYSTEM</p>
-              <h1 className="cds--type-heading-07">Network operations</h1>
-              <p className="cds--type-body-compact-01">Live operational evidence for AS218822, refreshed every 30 seconds.</p>
-            </Stack>
-          </Column>
-          <Column sm={4} md={2} lg={4}>
-            <Stack gap={3}>
-              <Button kind="secondary" renderIcon={Renew} disabled={loading} onClick={refresh}>Refresh telemetry</Button>
-              <Tag type={error ? "red" : data ? "green" : "gray"}>{error ? "Telemetry unavailable" : data ? `Updated ${formatTime(data.generatedAt)}` : "Connecting"}</Tag>
-            </Stack>
-          </Column>
-
-          {error && <Column sm={4} md={8} lg={16}><InlineNotification kind="error" lowContrast hideCloseButton title="Telemetry unavailable" subtitle={`${error} Try refreshing in a moment.`} /></Column>}
-
-          <Column sm={4} md={4} lg={4}>{summary ? <MetricTile label="BGP established" value={`${summary.bgpUp} / ${summary.bgpTotal}`} detail="Live sessions" status={bgpPercent === 100 ? "Healthy" : "Degraded"} statusType={bgpPercent === 100 ? "green" : "warm-gray"} progress={bgpPercent} /> : <Tile><SkeletonText heading /><SkeletonText /></Tile>}</Column>
-          <Column sm={4} md={4} lg={4}>{summary ? <MetricTile label="Aggregate traffic" value={formatRate(inbound + outbound)} detail={`Inbound ${formatRate(inbound)} / Outbound ${formatRate(outbound)}`} status="5 min rate" statusType="purple" /> : <Tile><SkeletonText heading /><SkeletonText /></Tile>}</Column>
-          <Column sm={2} md={2} lg={2}>{summary ? <MetricTile label="Routers" value={`${summary.routersUp} / ${summary.routersTotal}`} detail="Online" progress={routerPercent} /> : <Tile><SkeletonText heading /></Tile>}</Column>
-          <Column sm={2} md={2} lg={2}>{summary ? <MetricTile label="Pods" value={`${summary.containersReady} / ${summary.containersTotal}`} detail="Ready" progress={containerPercent} /> : <Tile><SkeletonText heading /></Tile>}</Column>
-          <Column sm={2} md={2} lg={2}>{summary ? <MetricTile label="Alerts" value={String(summary.activeAlerts)} detail="Prometheus rules firing" status={summary.activeAlerts ? "Action required" : "Clear"} statusType={summary.activeAlerts ? "red" : "green"} /> : <Tile><SkeletonText heading /></Tile>}</Column>
-          <Column sm={2} md={2} lg={2}>{summary ? <MetricTile label="RPKI" value={summary.vrps === null ? "N/A" : new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 2 }).format(summary.vrps)} detail="Validated VRPs / Routinator" /> : <Tile><SkeletonText heading /></Tile>}</Column>
-
-          <Column sm={4} md={8} lg={9} id="graphs">
-            <Tile>
-              <Stack gap={4}>
-                <h2 className="cds--type-heading-04">BGP availability</h2>
-                {bgpChartData.length ? <LineChart data={bgpChartData} options={{ ...chartBase, legend: { enabled: true } }} /> : <SkeletonText paragraph lineCount={6} />}
+        <Stack gap={7}>
+          <Grid fullWidth id="overview">
+            <Column sm={4} md={6} lg={12}>
+              <Stack gap={3}>
+                <p className="cds--type-label-01">PUBLIC TELEMETRY / IPV6 AUTONOMOUS SYSTEM</p>
+                <h1 className="cds--type-heading-07">Network operations</h1>
+                <p className="cds--type-body-compact-01">Live operational evidence for AS218822, refreshed every 30 seconds.</p>
               </Stack>
-            </Tile>
-          </Column>
-          <Column sm={4} md={8} lg={7}>
-            <Tile>
-              <Stack gap={4}>
-                <h2 className="cds--type-heading-04">Network throughput</h2>
-                {trafficChartData.length ? <LineChart data={trafficChartData} options={{ ...trafficOptions, legend: { enabled: true } }} /> : <SkeletonText paragraph lineCount={6} />}
+            </Column>
+            <Column sm={4} md={2} lg={4}>
+              <Stack gap={3}>
+                <Button kind="secondary" renderIcon={Renew} disabled={loading} onClick={refresh}>Refresh telemetry</Button>
+                <Tag type={error ? "red" : data ? "green" : "gray"}>{error ? "Telemetry unavailable" : data ? `Updated ${formatTime(data.generatedAt)}` : "Connecting"}</Tag>
               </Stack>
-            </Tile>
-          </Column>
+            </Column>
+            {error && <Column sm={4} md={8} lg={16}><InlineNotification kind="error" lowContrast hideCloseButton title="Telemetry unavailable" subtitle={`${error} Try refreshing in a moment.`} /></Column>}
+          </Grid>
 
-          <Column sm={4} md={8} lg={10} id="sessions">
+          <Grid fullWidth>
+            <Column sm={4} md={4} lg={4}>{summary ? <MetricTile label="BGP established" value={`${summary.bgpUp} / ${summary.bgpTotal}`} detail="Live sessions" status={bgpPercent === 100 ? "Healthy" : "Degraded"} statusType={bgpPercent === 100 ? "green" : "warm-gray"} progress={bgpPercent} /> : <Tile><SkeletonText heading /><SkeletonText /></Tile>}</Column>
+            <Column sm={4} md={4} lg={4}>{summary ? <MetricTile label="Aggregate traffic" value={formatRate(inbound + outbound)} detail={`In ${formatRate(inbound)} / Out ${formatRate(outbound)}`} status="5 min rate" statusType="purple" /> : <Tile><SkeletonText heading /><SkeletonText /></Tile>}</Column>
+            <Column sm={2} md={2} lg={2}>{summary ? <MetricTile label="Routers" value={`${summary.routersUp} / ${summary.routersTotal}`} detail="Online" progress={routerPercent} /> : <Tile><SkeletonText heading /></Tile>}</Column>
+            <Column sm={2} md={2} lg={2}>{summary ? <MetricTile label="Pods" value={`${summary.containersReady} / ${summary.containersTotal}`} detail="Ready" progress={containerPercent} /> : <Tile><SkeletonText heading /></Tile>}</Column>
+            <Column sm={2} md={2} lg={2}>{summary ? <MetricTile label="Alerts" value={String(summary.activeAlerts)} detail="Firing rules" status={summary.activeAlerts ? "Action required" : "Clear"} statusType={summary.activeAlerts ? "red" : "green"} /> : <Tile><SkeletonText heading /></Tile>}</Column>
+            <Column sm={2} md={2} lg={2}>{summary ? <MetricTile label="RPKI" value={summary.vrps === null ? "N/A" : new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 2 }).format(summary.vrps)} detail="VRPs" /> : <Tile><SkeletonText heading /></Tile>}</Column>
+          </Grid>
+
+          <Grid fullWidth id="graphs">
+            <Column sm={4} md={8} lg={9}>
+              <Tile>
+                <Stack gap={4}>
+                  <h2 className="cds--type-heading-04">BGP availability</h2>
+                  {bgpChartData.length ? <LineChart data={bgpChartData} options={{ ...chartBase, legend: { enabled: true } }} /> : <SkeletonText paragraph lineCount={6} />}
+                </Stack>
+              </Tile>
+            </Column>
+            <Column sm={4} md={8} lg={7}>
+              <Tile>
+                <Stack gap={4}>
+                  <h2 className="cds--type-heading-04">Network throughput</h2>
+                  {trafficChartData.length ? <LineChart data={trafficChartData} options={{ ...trafficOptions, legend: { enabled: true } }} /> : <SkeletonText paragraph lineCount={6} />}
+                </Stack>
+              </Tile>
+            </Column>
+          </Grid>
+
+          <Grid fullWidth>
+            <Column sm={4} md={8} lg={10} id="sessions">
             <DataTable rows={sessionRows} headers={sessionHeaders} size="sm">
               {({ rows, headers, getHeaderProps, getRowProps, getTableProps }) => (
                 <TableContainer title="BGP sessions" description={summary ? `${summary.bgpUp} of ${summary.bgpTotal} established` : "Loading live state"}>
@@ -223,32 +229,34 @@ export default function Dashboard() {
                 </TableContainer>
               )}
             </DataTable>
-          </Column>
-
-          <Column sm={4} md={8} lg={6} id="infrastructure">
-            <Stack gap={5}>
-              <Tile><Stack gap={4}><h2 className="cds--type-heading-04">IPv6 probes</h2><StateList empty="No probes configured" items={data?.reachability.map((probe) => ({ id: `${probe.location}-${probe.target}`, name: probe.target, detail: probe.location, up: probe.reachable, upLabel: "Reachable", downLabel: "Failed" })) ?? []} /></Stack></Tile>
-              <Tile><Stack gap={4}><h2 className="cds--type-heading-04">Workloads</h2><StateList empty="No workloads reported" items={data?.containers.map((container) => ({ id: `${container.pod}-${container.name}`, name: container.name, detail: container.pod, up: container.ready, upLabel: "Ready", downLabel: "Not ready" })) ?? []} /></Stack></Tile>
-              <Tile><Stack gap={4}><h2 className="cds--type-heading-04">Active alerts</h2>{data?.alerts.length ? data.alerts.map((alert) => <InlineNotification key={`${alert.name}-${alert.location}`} kind="warning" lowContrast hideCloseButton title={alert.name.replaceAll("_", " ")} subtitle={[alert.severity, alert.location, alert.protocol].filter(Boolean).join(" / ")} />) : <InlineNotification kind="success" lowContrast hideCloseButton title="No active AS218822 alerts" />}</Stack></Tile>
-            </Stack>
-          </Column>
-
-          <Column sm={4} md={8} lg={16}>
-            <Tile>
-              <Stack gap={4}>
-                <h2 className="cds--type-heading-04">Network registry</h2>
-                <StructuredListWrapper>
-                  <StructuredListBody>
-                    <StructuredListRow><StructuredListCell><strong>Address family</strong></StructuredListCell><StructuredListCell>IPv6 only</StructuredListCell></StructuredListRow>
-                    <StructuredListRow><StructuredListCell><strong>Origin prefix</strong></StructuredListCell><StructuredListCell>2a06:9801:ff0::/44</StructuredListCell></StructuredListRow>
-                    <StructuredListRow><StructuredListCell><strong>Peering policy</strong></StructuredListCell><StructuredListCell><a href="https://as218822.net/peering/">Open policy</a></StructuredListCell></StructuredListRow>
-                    <StructuredListRow><StructuredListCell><strong>Registry</strong></StructuredListCell><StructuredListCell><a href="https://www.peeringdb.com/net/43433">PeeringDB #43433</a></StructuredListCell></StructuredListRow>
-                  </StructuredListBody>
-                </StructuredListWrapper>
+            </Column>
+            <Column sm={4} md={8} lg={6} id="infrastructure">
+              <Stack gap={5}>
+                <Tile><Stack gap={4}><h2 className="cds--type-heading-04">IPv6 probes</h2><StateList empty="No probes configured" items={data?.reachability.map((probe) => ({ id: `${probe.location}-${probe.target}`, name: probe.target, detail: probe.location, up: probe.reachable, upLabel: "Reachable", downLabel: "Failed" })) ?? []} /></Stack></Tile>
+                <Tile><Stack gap={4}><h2 className="cds--type-heading-04">Workloads</h2><StateList empty="No workloads reported" items={data?.containers.map((container) => ({ id: `${container.pod}-${container.name}`, name: container.name, detail: container.pod, up: container.ready, upLabel: "Ready", downLabel: "Not ready" })) ?? []} /></Stack></Tile>
+                <Tile><Stack gap={4}><h2 className="cds--type-heading-04">Active alerts</h2>{data?.alerts.length ? data.alerts.map((alert) => <InlineNotification key={`${alert.name}-${alert.location}`} kind="warning" lowContrast hideCloseButton title={alert.name.replaceAll("_", " ")} subtitle={[alert.severity, alert.location, alert.protocol].filter(Boolean).join(" / ")} />) : <InlineNotification kind="success" lowContrast hideCloseButton title="No active AS218822 alerts" />}</Stack></Tile>
               </Stack>
-            </Tile>
-          </Column>
-        </Grid>
+            </Column>
+          </Grid>
+
+          <Grid fullWidth>
+            <Column sm={4} md={8} lg={16}>
+              <Tile>
+                <Stack gap={4}>
+                  <h2 className="cds--type-heading-04">Network registry</h2>
+                  <StructuredListWrapper>
+                    <StructuredListBody>
+                      <StructuredListRow><StructuredListCell><strong>Address family</strong></StructuredListCell><StructuredListCell>IPv6 only</StructuredListCell></StructuredListRow>
+                      <StructuredListRow><StructuredListCell><strong>Origin prefix</strong></StructuredListCell><StructuredListCell>2a06:9801:ff0::/44</StructuredListCell></StructuredListRow>
+                      <StructuredListRow><StructuredListCell><strong>Peering policy</strong></StructuredListCell><StructuredListCell><a href="https://as218822.net/peering/">Open policy</a></StructuredListCell></StructuredListRow>
+                      <StructuredListRow><StructuredListCell><strong>Registry</strong></StructuredListCell><StructuredListCell><a href="https://www.peeringdb.com/net/43433">PeeringDB #43433</a></StructuredListCell></StructuredListRow>
+                    </StructuredListBody>
+                  </StructuredListWrapper>
+                </Stack>
+              </Tile>
+            </Column>
+          </Grid>
+        </Stack>
       </Content>
     </Theme>
   );
