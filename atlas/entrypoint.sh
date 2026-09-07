@@ -8,7 +8,12 @@ case "${SSH_ADDRESS_FAMILY:-inet}" in
         exit 1
         ;;
 esac
-sed -i "s/AddressFamily .*/AddressFamily ${SSH_ADDRESS_FAMILY:-inet}/" /etc/ssh/ssh_config.d/ripe-atlas.conf
+ssh_address_family="${SSH_ADDRESS_FAMILY:-inet}"
+if [ "$ssh_address_family" = inet6 ]; then
+    # The controller connects back to the probe through 127.0.0.1:2023.
+    ssh_address_family=any
+fi
+sed -i "s/AddressFamily .*/AddressFamily ${ssh_address_family}/" /etc/ssh/ssh_config.d/ripe-atlas.conf
 
 if [ -n "${WAIT_FOR_INTERFACE:-}" ]; then
     until ip -6 route get 2606:4700:4700::1111 2>/dev/null | grep -q "dev ${WAIT_FOR_INTERFACE}"; do

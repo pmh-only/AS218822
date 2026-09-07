@@ -12,6 +12,7 @@ case "${SSH_ADDRESS_FAMILY:-inet}" in
     inet6)
         [ "$REG_2_HOST" = "$REG_1_HOST" ]
         [ "$REG_5_HOST" = "$REG_4_HOST" ]
+        grep -q '^    AddressFamily any$' /etc/ssh/ssh_config.d/ripe-atlas.conf
         ;;
     any)
         [ "$REG_2_HOST" = 193.0.19.75 ]
