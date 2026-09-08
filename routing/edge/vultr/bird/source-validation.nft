@@ -11,6 +11,7 @@ table inet as218822_sav {
     counter local_spoof { }
     chain local_source {
         type filter hook output priority -150; policy accept;
+        ip6 saddr fe80::/10 ip6 hoplimit 255 icmpv6 type { nd-neighbor-solicit, nd-neighbor-advert } return
         ip6 daddr 2000::/3 ip6 saddr != { 2a06:9801:ff0::/44, 2401:c080:1c02:bc5:5400:6ff:fe9f:8b3e, fd00:218:822:473::1 } counter name local_spoof drop
     }
 }

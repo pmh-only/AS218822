@@ -2,6 +2,7 @@
 counter local_spoof { }
 chain local_source {
     type filter hook output priority -150; policy accept;
+    ip6 saddr fe80::/10 ip6 hoplimit 255 icmpv6 type { nd-neighbor-solicit, nd-neighbor-advert } return
     ip6 daddr 2000::/3 ip6 saddr != @transport6 ip6 saddr != $local6 counter name local_spoof drop
 }
 
@@ -14,7 +15,8 @@ chain upstream_source {
     meta iif 0 ip saddr @transport4 counter name egress_valid return
     # Kernel ND does not always have iif 0; hop limit 255 prevents routed bypasses.
     ip6 saddr @transport6 ip6 hoplimit 255 icmpv6 type { nd-neighbor-solicit, nd-neighbor-advert } return
-    ip6 saddr fe80::/10 ip6 daddr { fe80::/10, ff02::/16 } ip6 hoplimit 255 icmpv6 type { nd-router-solicit, nd-neighbor-solicit, nd-neighbor-advert } return
+    ip6 saddr fe80::/10 ip6 hoplimit 255 icmpv6 type { nd-neighbor-solicit, nd-neighbor-advert } return
+    ip6 saddr fe80::/10 ip6 daddr { fe80::/10, ff02::/16 } ip6 hoplimit 255 icmpv6 type nd-router-solicit return
     ip6 saddr :: ip6 daddr ff02::/16 ip6 hoplimit 255 icmpv6 type nd-neighbor-solicit return
     # MLD maintains solicited-node multicast membership on snooping L2 links.
     ip6 saddr { ::, fe80::/10 } ip6 daddr ff02::/16 ip6 hoplimit 1 icmpv6 type { 130, 131, 132, 143 } return

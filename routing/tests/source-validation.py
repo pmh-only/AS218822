@@ -162,6 +162,8 @@ assert counter("egress_spoof") == before, "DAD neighbor discovery was dropped"
 local("::", "ff02::1:ff00:1", interface="zt-test", payload=b"\x87" + b"\0" * 23, protocol=58, hops=64)
 assert counter("egress_spoof") == before + 1, "invalid neighbor discovery hop limit was allowed"
 print("PASS scoped neighbor discovery", flush=True)
+expect("link-local unicast neighbor probe", lambda: local("fe80::1", "2606:4700::1111", payload=b"\x87" + b"\0" * 23, protocol=58, hops=255), "neighbor_discovery", "test_observer")
+expect("invalid unicast neighbor probe rejected", lambda: local("fe80::1", "2606:4700::1111", payload=b"\x87" + b"\0" * 23, protocol=58, hops=64), "local_spoof")
 before = counter("egress_spoof")
 local("fe80::1", "ff02::16", interface="zt-test", payload=b"\x8f" + b"\0" * 7, protocol=58, hops=1)
 assert counter("egress_spoof") == before, "MLD membership report was dropped"
@@ -196,6 +198,7 @@ expect("Vultr core authorized source", lambda: inject("core", "2a06:9801:ff0::2"
 expect("Vultr core foreign source rejected", lambda: inject("core", "2001:4860::bad", "2606:4700::1111"), "ingress_spoof")
 expect("Vultr core peering source is link-only", lambda: inject("core", "fd00:218:822:473::", "2606:4700::1111"), "ingress_spoof")
 expect("Vultr local foreign source rejected", lambda: local("2001:4860::bad", "2606:4700::1111"), "local_spoof")
+expect("Vultr link-local unicast neighbor probe", lambda: local("fe80::1", "2606:4700::1111", payload=b"\x87" + b"\0" * 23, protocol=58, hops=255), "passed", "test_observer")
 
 # Keep cryptographic WireGuard source checks aligned with the tested ingress ACLs.
 for path, expected in (
