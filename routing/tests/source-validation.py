@@ -92,6 +92,7 @@ nft("""
 table inet test_observer {
     counter passed { }
     counter delivered { }
+    counter neighbor_discovery { }
     chain observe_input {
         type filter hook input priority -50; policy accept;
         udp dport 54321 counter name delivered
@@ -99,6 +100,7 @@ table inet test_observer {
     chain observe {
         type filter hook postrouting priority 120; policy accept;
         ip6 daddr 2606:4700::1111 counter name passed
+        oifname "zt-test" icmpv6 type nd-neighbor-solicit counter name neighbor_discovery
     }
 }
 """)
@@ -111,7 +113,12 @@ for interface in ("client", "lunalight", "tailscale0", "core"):
     run("ip", "-6", "address", "add", "fd00:ffff::1/128", "dev", interface, "nodad")
 
 for interface in ("bgptunnel-es", "zt-test", "hkix-gretap", "uplink"):
-    run("ip", "link", "add", interface, "type", "dummy")
+    if interface == "zt-test":
+        run("ip", "link", "add", interface, "type", "veth", "peer", "name", "p-zt-test")
+        run("ip", "link", "set", "p-zt-test", "addrgenmode", "none")
+        run("ip", "link", "set", "p-zt-test", "up")
+    else:
+        run("ip", "link", "add", interface, "type", "dummy")
     run("ip", "link", "set", interface, "addrgenmode", "none")
     run("ip", "link", "set", interface, "up")
     run("ip", "-6", "neigh", "replace", "2606:4700::1111", "lladdr", "02:00:00:00:00:03", "dev", interface, "nud", "permanent")
@@ -155,6 +162,15 @@ assert counter("egress_spoof") == before, "DAD neighbor discovery was dropped"
 local("::", "ff02::1:ff00:1", interface="zt-test", payload=b"\x87" + b"\0" * 23, protocol=58, hops=64)
 assert counter("egress_spoof") == before + 1, "invalid neighbor discovery hop limit was allowed"
 print("PASS scoped neighbor discovery", flush=True)
+before = counter("egress_spoof")
+local("fe80::1", "ff02::16", interface="zt-test", payload=b"\x8f" + b"\0" * 7, protocol=58, hops=1)
+assert counter("egress_spoof") == before, "MLD membership report was dropped"
+local("fe80::1", "ff02::16", interface="zt-test", payload=b"\x8f" + b"\0" * 7, protocol=58, hops=64)
+assert counter("egress_spoof") == before + 1, "non-link-local MLD hop limit was allowed"
+print("PASS scoped multicast listener discovery", flush=True)
+run("ip", "-6", "address", "add", "2a0e:8f01:1000:16::157/64", "dev", "zt-test", "nodad")
+with socket.socket(socket.AF_INET6, socket.SOCK_DGRAM) as sender:
+    expect("kernel-generated neighbor discovery", lambda: sender.sendto(b"test", ("2a0e:8f01:1000:16::1", 54321)), "neighbor_discovery", "test_observer")
 
 load("/routing/edge/gre-gateway/bird/source-validation.nft")
 run("ip", "-6", "address", "add", "fd00:218:822:2014:23::/127", "dev", "lunalight", "nodad")

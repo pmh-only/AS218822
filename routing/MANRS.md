@@ -23,8 +23,9 @@ claim of MANRS membership or completed certification. The public policy is at
   special-purpose prefixes, lengths outside /12-/48, empty/overlong AS paths,
   reserved/private ASNs, and RPKI Invalid routes. RPKI NotFound is allowed for
   transit; it is not evidence of origin authorization. Import tables permit
-  revalidation when the RTR cache changes. This is origin validation, not
-  cryptographic validation of the entire AS path.
+  revalidation when the RTR cache changes; the core also keeps export tables
+  for automatic revalidation of its customer export filters. This is origin
+  validation, not cryptographic validation of the entire AS path.
 - IRR allowlists are manually reviewed and version controlled. There is no
   automatic IRR-to-filter generator. Peers can build filters from
   `RIPE::AS218822:AS-PMHONLY`, the route6 objects, and the exact prefixes below.
@@ -67,8 +68,9 @@ GitOps when it is revoked. Do not commit private correspondence or credentials.
 - The core and GRE gateway validate traffic leaving their external routing
   tunnels against the owned aggregate and the two customer prefixes. Only
   locally generated traffic may use the explicitly listed provider-assigned
-  transport addresses. IPv6 neighbor discovery is preserved with link scope
-  and hop-limit checks; arbitrary ULA/link-local traffic cannot escape.
+  transport addresses. IPv6 neighbor and multicast listener discovery are
+  preserved with link scope and hop-limit checks; arbitrary ULA/link-local
+  traffic cannot escape.
 - Egress validation runs at postrouting priority 110, after SNAT at 100. It
   covers forwarded and locally generated packets without trusting an
   established-connection or packet-mark bypass. Non-service IPv4 forwarding

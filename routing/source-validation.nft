@@ -12,7 +12,11 @@ chain upstream_source {
     # Provider-assigned addresses are allowed only for locally generated traffic.
     meta iif 0 ip6 saddr @transport6 counter name egress_valid return
     meta iif 0 ip saddr @transport4 counter name egress_valid return
-    meta iif 0 ip6 saddr fe80::/10 ip6 daddr { fe80::/10, ff02::/16 } ip6 hoplimit 255 icmpv6 type { nd-router-solicit, nd-neighbor-solicit, nd-neighbor-advert } return
-    meta iif 0 ip6 saddr :: ip6 daddr ff02::/16 ip6 hoplimit 255 icmpv6 type nd-neighbor-solicit return
+    # Kernel ND does not always have iif 0; hop limit 255 prevents routed bypasses.
+    ip6 saddr @transport6 ip6 hoplimit 255 icmpv6 type { nd-neighbor-solicit, nd-neighbor-advert } return
+    ip6 saddr fe80::/10 ip6 daddr { fe80::/10, ff02::/16 } ip6 hoplimit 255 icmpv6 type { nd-router-solicit, nd-neighbor-solicit, nd-neighbor-advert } return
+    ip6 saddr :: ip6 daddr ff02::/16 ip6 hoplimit 255 icmpv6 type nd-neighbor-solicit return
+    # MLD maintains solicited-node multicast membership on snooping L2 links.
+    ip6 saddr { ::, fe80::/10 } ip6 daddr ff02::/16 ip6 hoplimit 1 icmpv6 type { 130, 131, 132, 143 } return
     counter name egress_spoof drop
 }
