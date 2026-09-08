@@ -19,13 +19,15 @@ claim of MANRS membership or completed certification. The public policy is at
 - The customer session has a two-route import limit and a ten-route receive
   limit. Exceeding either disables the session until an operator resolves the
   cause through the reviewed configuration and deployment process.
-- Public transit imports reject defaults, local space, non-global and listed
+- Full-table transit imports reject defaults, local space, non-global and listed
   special-purpose prefixes, lengths outside /12-/48, empty/overlong AS paths,
-  reserved/private ASNs, and RPKI Invalid routes. RPKI NotFound is allowed for
-  transit; it is not evidence of origin authorization. Import tables permit
-  revalidation when the RTR cache changes; the core also keeps export tables
-  for automatic revalidation of its customer export filters. This is origin
-  validation, not cryptographic validation of the entire AS path.
+  reserved/private ASNs, and RPKI Invalid routes. The Route64 adjacency accepts
+  only the exact IPv6 default route and has a one-route import limit. RPKI
+  NotFound is allowed for full-table transit; it is not evidence of origin
+  authorization. Import tables permit revalidation when the RTR cache changes;
+  the core also keeps export tables for automatic revalidation of its customer
+  export filters. This is origin validation, not cryptographic validation of the
+  entire AS path.
 - IRR allowlists are manually reviewed and version controlled. There is no
   automatic IRR-to-filter generator. Peers can build filters from
   `RIPE::AS218822:AS-PMHONLY`, the route6 objects, and the exact prefixes below.
