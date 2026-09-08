@@ -93,6 +93,12 @@ Individual query failures do not discard other sources; total failure returns 50
 Requests are coalesced, cached for ten seconds, and limited to eight concurrent
 upstream queries per snapshot.
 
+Routing/probe gauges are grouped by their logical location/protocol/type or
+location/target, not ephemeral pod or scrape-instance labels. This stitches
+history across pod replacements. Overlapping exporters count once and a down
+result wins when they disagree. BGP availability and state changes are calculated
+after grouping, using 30-second subquery samples. Missing samples remain gaps.
+
 Public views cover routing protocol state, BGP state history/changes/sampled
 availability, IPv6 reachability, overlay throughput/packets/paths/drops, RPKI VRPs,
 trust anchors, validator freshness, workload readiness, and firing/pending alerts.
@@ -116,3 +122,8 @@ invalid identities and tokens, PKCE/state/nonce checks, authorization/cache
 isolation, logout CSRF, partial telemetry failure, non-finite readings, and query
 window boundaries. The container build runs both checks and retains only server
 dependencies in its runtime image.
+
+The container build also runs pod-replacement regressions against Prometheus'
+actual query engine using a build-only `promtool`. To run that test outside Docker,
+set `PROMTOOL` to a local promtool executable when running `pnpm test`; otherwise
+the query-engine test is skipped, while the Node tests still run.

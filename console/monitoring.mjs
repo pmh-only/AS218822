@@ -10,6 +10,10 @@ const cpu = `sum by (pod, container) (${rate("container_cpu_usage_seconds_total"
 const memory = `max by (pod, container) (container_memory_working_set_bytes{${containers}})`;
 const nodeScope = `group by (node) (kube_pod_info{${namespace}})`;
 const onNodes = (query) => `label_replace((${query}) * on(instance) group_left(nodename) node_uname_info{job="ne"}, "node", "$1", "nodename", "(.+)") and on(node) ${nodeScope}`;
+// Pod/instance labels change on replacement; they are not routing identities.
+// When exporters overlap, a down sample must not be hidden by an up sample.
+const bgpState = 'min by (location, protocol, type) (as218822_protocol_up{type="BGP"})';
+const probeState = "min by (location, target) (as218822_ipv6_reachable)";
 
 // The browser chooses only a fixed time window. Queries and output labels are allowlisted here.
 export function queryDefinitions(window, operator = false) {
@@ -52,10 +56,10 @@ export function queryDefinitions(window, operator = false) {
     overlayHealth: ["Overlay health", `{${tailscale},__name__=~"tailscaled_health_messages|tailscaled_advertised_routes|tailscaled_approved_routes|tailscaled_home_derp_region_id"}`],
     repositories: ["RPKI repository fetch status", `{${rpki},__name__=~"routinator_rrdp_status|routinator_rsync_status|routinator_rrdp_duration|routinator_rsync_duration"}`],
   } : {
-    protocols: ["Routing protocols", "as218822_protocol_up"],
-    protocolObserved: ["Protocol sample times", "timestamp(as218822_protocol_up)"],
-    routers: ["Routing daemons", "as218822_bird_up"],
-    reachability: ["IPv6 probes", "as218822_ipv6_reachable"],
+    protocols: ["Routing protocols", "min by (location, protocol, type) (as218822_protocol_up)"],
+    protocolObserved: ["Protocol sample times", "max by (location, protocol, type) (timestamp(as218822_protocol_up))"],
+    routers: ["Routing daemons", "min by (location) (as218822_bird_up)"],
+    reachability: ["IPv6 probes", probeState],
     containers: ["Workload readiness", `kube_pod_container_status_ready{${namespace}}`],
     alerts: ["AS218822 alerts", 'ALERTS{alertname=~"AS218822.+",alertstate=~"firing|pending"}'],
     vrps: ["Validated route prefixes", `routinator_vrps_final{${rpki}}`],
@@ -63,10 +67,10 @@ export function queryDefinitions(window, operator = false) {
     trafficPaths: ["Overlay transport paths", traffic("bytes", "path")],
     packets: ["Overlay packet rate", traffic("packets", "pod")],
     drops: ["Overlay dropped packets", `sum by (reason) (${rate("tailscaled_outbound_dropped_packets_total", tailscale)})`],
-    sessionAvailability: ["Sampled session availability", `avg_over_time(as218822_protocol_up{type="BGP"}[${window}]) * 100`],
-    sessionChanges: ["Session state changes", `changes(as218822_protocol_up{type="BGP"}[${window}])`],
-    sessionHistory: ["BGP session history", 'as218822_protocol_up{type="BGP"}', true],
-    probeHistory: ["IPv6 probe history", "as218822_ipv6_reachable", true],
+    sessionAvailability: ["Sampled session availability", `avg_over_time((${bgpState})[${window}:30s]) * 100`],
+    sessionChanges: ["Session state changes", `changes((${bgpState})[${window}:30s])`],
+    sessionHistory: ["BGP session history", bgpState, true],
+    probeHistory: ["IPv6 probe history", probeState, true],
     trafficHistory: ["Overlay throughput history", traffic("bytes", "direction"), true],
     packetHistory: ["Overlay packet history", traffic("packets", "direction"), true],
     vrpHistory: ["VRP history", `routinator_vrps_final{${rpki}}`, true],

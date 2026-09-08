@@ -1,3 +1,5 @@
+FROM prom/prometheus:v3.5.0 AS prometheus
+
 FROM node:24-alpine AS build
 
 WORKDIR /app
@@ -7,7 +9,8 @@ RUN pnpm install --frozen-lockfile
 COPY astro.config.mjs tsconfig.json ./
 COPY src ./src
 COPY server.mjs auth.mjs monitoring.mjs *.test.mjs ./
-RUN pnpm build && pnpm test && pnpm prune --prod
+COPY --from=prometheus /bin/promtool /usr/local/bin/promtool
+RUN pnpm build && PROMTOOL=/usr/local/bin/promtool pnpm test && pnpm prune --prod
 
 FROM node:24-alpine
 

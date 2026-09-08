@@ -17,13 +17,13 @@ async function start(context, env = {}) {
     let result = [];
     if (url.pathname.endsWith("query_range")) {
       if (query.startsWith("sum by (direction)")) result = [{ metric: { direction: "in" }, values: [[now - 300, "2048"], [now, "4096"]] }];
-      if (query === 'as218822_protocol_up{type="BGP"}') result = [{ metric: { protocol: "transit_a", location: "core" }, values: [[now - 300, "1"], [now, "0"]] }];
-    } else if (query === "as218822_protocol_up") {
+      if (query === 'min by (location, protocol, type) (as218822_protocol_up{type="BGP"})') result = [{ metric: { protocol: "transit_a", location: "core" }, values: [[now - 300, "1"], [now, "0"]] }];
+    } else if (query === "min by (location, protocol, type) (as218822_protocol_up)") {
       result = [vector({ protocol: "transit_a", type: "BGP", location: "core" }, 1), vector({ protocol: "transit_b", type: "BGP", location: "core" }, 0), vector({ protocol: "rpki_cache", type: "RPKI", location: "core" }, 1)];
-    } else if (query === "timestamp(as218822_protocol_up)") {
+    } else if (query === "max by (location, protocol, type) (timestamp(as218822_protocol_up))") {
       result = [vector({ protocol: "transit_a", location: "core" }, now - 20)];
-    } else if (query === "as218822_ipv6_reachable") result = [vector({ location: "core", target: "2001:db8::1" }, 1)];
-    else if (query === "as218822_bird_up") result = [vector({ location: "core" }, 1)];
+    } else if (query === "min by (location, target) (as218822_ipv6_reachable)") result = [vector({ location: "core", target: "2001:db8::1" }, 1)];
+    else if (query === "min by (location) (as218822_bird_up)") result = [vector({ location: "core" }, 1)];
     else if (query.startsWith("kube_pod_container_status_ready")) result = [vector({ container: "bird", pod: "bird-0" }, 1), vector({ container: "tailscale", pod: "bird-0" }, 0)];
     else if (query.startsWith("ALERTS")) result = [vector({ alertname: "AS218822BGPSessionDown", severity: "warning", location: "core", protocol: "transit_b", alertstate: "firing" }, 1)];
     else if (query.startsWith("routinator_vrps_final")) result = [vector({}, 1000000)];
