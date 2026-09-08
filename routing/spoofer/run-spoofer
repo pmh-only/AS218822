@@ -1,5 +1,7 @@
 #!/bin/sh
 set -eu
+# Let the client report an I/O failure rather than die in TLS cleanup on SIGPIPE.
+trap '' PIPE
 
 : "${SPOOFER_ADDRESS:?Public IPv6 address is required}"
 : "${SPOOFER_PEERING_ADDRESS:?WireGuard peering address is required}"
@@ -33,4 +35,7 @@ done
 
 printf 'CAIDA measurement source: %s (IPv6 only, no NAT)\n' "$SPOOFER_ADDRESS"
 # Public anonymized results only; TLS verification remains enabled.
-timeout --kill-after=10 600 spoofer-prober -6 -s1 -r0
+status=0
+timeout --kill-after=10 600 spoofer-prober -6 -s1 -r0 || status=$?
+printf 'CAIDA client exit status: %s\n' "$status"
+exit "$status"

@@ -65,6 +65,13 @@ GitOps when it is revoked. Do not commit private correspondence or credentials.
 - Tailscale authenticates end-user peers. The core additionally rejects sources
   outside Tailscale's IPv6 /48 and IPv4 /10 on `tailscale0`. IPv6 exit traffic is
   translated to `2a06:9801:ff0::` by the existing Tailscale SNAT rule.
+- External ingress on the core, GRE gateway, and Vultr edge rejects sources from
+  the locally routed `2a06:9801:ff0::/48` and the Tailscale IPv6 /48. The check runs
+  before connection tracking, input, and forwarding. It covers the infrastructure
+  subnet, not just the measurement addresses. Authenticated internal links,
+  multihomed customer sources, and separately routed cloud prefixes such as
+  `2a06:9801:ffa::/48` are not blanket-blocked. Review this boundary whenever
+  subnet placement or an external interface changes.
 - The core and GRE gateway validate traffic leaving their external routing
   tunnels against the owned aggregate and the two customer prefixes. Only
   locally generated traffic may use the explicitly listed provider-assigned
@@ -143,6 +150,15 @@ that could cause GitOps to repeat public tests. Repeating a measurement requires
 an explicit new Job in GitOps. Inspect the reported source address, ASN, and
 outcomes before treating a report as evidence; dedicated measurement segments
 do not establish coverage of every customer, cloud service, or underlay.
+
+The initial IPv6 reports are retained at
+[session 2229072](https://spoofer.caida.org/report.php?sessionid=2229072) and
+[session 2229071](https://spoofer.caida.org/report.php?sessionid=2229071). Both are
+attributed to AS218822 with NAT reported as absent and outbound private/routable
+spoofing blocked. They are baseline evidence, not a complete pass: local logs
+recorded an ingress validation gap and final server-response timeouts. The
+runner preserves client errors instead of converting a published report URL
+into a successful exit status.
 
 ### Local Tests
 

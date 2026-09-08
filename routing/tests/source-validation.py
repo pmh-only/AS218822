@@ -83,6 +83,20 @@ def load(config):
     run("nft", "list", "table", "inet", "test_observer")
 
 
+def check_external_ingress(interface):
+    for source in ("2a06:9801:ff0::82", "2a06:9801:ff0:100::82",
+                   "2a06:9801:ff0:101::82", "2a06:9801:ff0:200::82",
+                   "fd7a:115c:a1e0::82"):
+        for destination in ("2a06:9801:ff0::", "2606:4700::1111"):
+            expect(f"{interface}: reject external local source {source} to {destination}",
+                   lambda: inject(interface, source, destination), "ingress_spoof")
+    for source in ("2001:4860::1", "2a06:9801:ffa::1", "2a06:9801:ffb::1",
+                   "2a0f:6284:b::1", "fd00:200:21:1::17"):
+        expect(f"{interface}: preserve remote/cloud/customer/control source {source}",
+               lambda: inject(interface, source, "2a06:9801:ff0::"),
+               "delivered", "test_observer")
+
+
 # Refuse accidental execution on an operator's host or a networked container.
 links = json.loads(run("ip", "-j", "link", "show"))
 assert Path("/.dockerenv").exists() and [link["ifname"] for link in links] == ["lo"]
@@ -115,12 +129,12 @@ for interface in ("client", "lunalight", "tailscale0", "core"):
         run("ip", "link", "set", side, "up")
     run("ip", "-6", "address", "add", "fd00:ffff::1/128", "dev", interface, "nodad")
 
-for interface in ("bgptunnel-es", "zt-test", "hkix-gretap", "uplink"):
-    if interface == "zt-test":
-        run("ip", "link", "add", interface, "type", "veth", "peer", "name", "p-zt-test")
-        run("ip", "link", "set", "p-zt-test", "addrgenmode", "none")
-        run("ip", "link", "set", "p-zt-test", "multicast", "off")
-        run("ip", "link", "set", "p-zt-test", "up")
+for interface in ("bgptunnel-es", "zt-test", "hkix-gretap", "enp1s0", "uplink"):
+    if interface != "uplink":
+        run("ip", "link", "add", interface, "type", "veth", "peer", "name", "p-" + interface)
+        run("ip", "link", "set", "p-" + interface, "addrgenmode", "none")
+        run("ip", "link", "set", "p-" + interface, "multicast", "off")
+        run("ip", "link", "set", "p-" + interface, "up")
     else:
         run("ip", "link", "add", interface, "type", "dummy")
     run("ip", "link", "set", interface, "addrgenmode", "none")
@@ -132,6 +146,8 @@ run("ip", "-6", "route", "add", "2606:4700::1111/128", "dev", "bgptunnel-es")
 run("ip", "route", "add", "198.51.100.1/32", "dev", "bgptunnel-es")
 
 load("/routing/bird/source-validation.nft")
+check_external_ingress("bgptunnel-es")
+check_external_ingress("zt-test")
 expect("own source forwarded", lambda: inject("client", "2a06:9801:ff0::2", "2606:4700::1111"), "egress_valid")
 expect("customer source forwarded", lambda: inject("client", "2a0f:6284:b::2", "2606:4700::1111"), "egress_valid")
 for source in ("2001:4860::bad", "fd00::bad", "2a0f:6284:d::1", "2a0c:9a40:a008::4a"):
@@ -179,6 +195,10 @@ with socket.socket(socket.AF_INET6, socket.SOCK_DGRAM) as sender:
     expect("kernel-generated neighbor discovery", lambda: sender.sendto(b"test", ("2a0e:8f01:1000:16::1", 54321)), "neighbor_discovery", "test_observer")
 
 load("/routing/edge/gre-gateway/bird/source-validation.nft")
+check_external_ingress("hkix-gretap")
+expect("GRE accepts local infrastructure from authenticated backbone",
+       lambda: inject("core", "2a06:9801:ff0:200::1", "2a06:9801:ff0::"),
+       "delivered", "test_observer")
 run("ip", "-6", "address", "add", "fd00:218:822:2014:23::/127", "dev", "lunalight", "nodad")
 run("ip", "-6", "route", "replace", "2606:4700::1111/128", "dev", "hkix-gretap")
 expect("Lunalight peering traffic preserved", lambda: inject("lunalight", "fd00:218:822:2014:23::1", "fd00:218:822:2014:23::"), "delivered", "test_observer")
@@ -192,9 +212,10 @@ expect("GRE external egress validated", lambda: inject("client", "2001:4860::bad
 # Returning Internet traffic toward the core/customer is not external egress.
 run("ip", "-6", "route", "replace", "2606:4700::1111/128", "dev", "core")
 run("ip", "-6", "neigh", "replace", "2606:4700::1111", "lladdr", "02:00:00:00:00:03", "dev", "core", "nud", "permanent")
-expect("asymmetric Internet return traffic preserved", lambda: inject("client", "2001:4860::1", "2606:4700::1111"), "passed", "test_observer")
+expect("asymmetric Internet return traffic preserved", lambda: inject("hkix-gretap", "2001:4860::1", "2606:4700::1111"), "passed", "test_observer")
 
 load("/routing/edge/vultr/bird/source-validation.nft")
+check_external_ingress("enp1s0")
 run("ip", "-6", "address", "add", "fd00:218:822:473::1/127", "dev", "core", "nodad")
 run("ip", "-6", "route", "replace", "2606:4700::1111/128", "dev", "uplink")
 expect("Vultr core peering traffic preserved", lambda: inject("core", "fd00:218:822:473::", "fd00:218:822:473::1"), "delivered", "test_observer")

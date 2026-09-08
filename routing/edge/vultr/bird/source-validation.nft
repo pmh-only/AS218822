@@ -4,6 +4,7 @@ table inet as218822_sav {
     counter ingress_spoof { }
     chain stub_source {
         type filter hook prerouting priority -300; policy accept;
+        iifname "enp1s0" ip6 saddr { 2a06:9801:ff0::/48, fd7a:115c:a1e0::/48 } counter name ingress_spoof drop
         iifname "core" ip6 saddr fd00:218:822:473:: ip6 daddr fd00:218:822:473::1 return
         iifname "core" ip6 saddr 2a06:9801:ff0::/44 return
         iifname "core" counter name ingress_spoof drop

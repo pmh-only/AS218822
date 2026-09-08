@@ -1,4 +1,5 @@
 define local6 = { 2a06:9801:ff0::/44, fd00:218:822:100::, fd00:218:822:473:: }
+define upstreams = { "bgptunnel-es", "bgptunnel-no", "hyehost-uk", "hyehost-us", "hyehost-nz", "route64-sg" }
 
 add table inet as218822_sav
 delete table inet as218822_sav
@@ -20,6 +21,9 @@ table inet as218822_sav {
     counter ingress_spoof { }
     chain stub_source {
         type filter hook prerouting priority -300; policy accept;
+        # Local infrastructure cannot originate on transit; cloud /48s are separate.
+        iifname $upstreams ip6 saddr { 2a06:9801:ff0::/48, fd7a:115c:a1e0::/48 } counter name ingress_spoof drop
+        iifname "zt*" ip6 saddr { 2a06:9801:ff0::/48, fd7a:115c:a1e0::/48 } counter name ingress_spoof drop
         # Tailscale authenticates individual peers; reject non-tailnet sources too.
         iifname "tailscale0" meta nfproto ipv6 ip6 saddr != fd7a:115c:a1e0::/48 counter name ingress_spoof drop
         iifname "tailscale0" meta nfproto ipv4 ip saddr != 100.64.0.0/10 counter name ingress_spoof drop
@@ -27,7 +31,7 @@ table inet as218822_sav {
     chain egress {
         # Tailscale SNAT runs at priority 100. Validate the actual on-wire source.
         type filter hook postrouting priority 110; policy accept;
-        oifname { "bgptunnel-es", "bgptunnel-no", "hyehost-uk", "hyehost-us", "hyehost-nz", "route64-sg" } jump upstream_source
+        oifname $upstreams jump upstream_source
         oifname "zt*" jump upstream_source
     }
 }
