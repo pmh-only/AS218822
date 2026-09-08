@@ -104,6 +104,11 @@ for setting in ("net.ipv6.conf.all.forwarding", "net.ipv4.ip_forward"):
     assert run("sysctl", "-n", setting).strip() == "1", f"Pass --sysctl {setting}=1 to Docker"
 nft("""
 table inet test_observer {
+    # AF_PACKET injections bypass IP output; only background peer-stack traffic is stopped.
+    chain quiet_peers {
+        type filter hook output priority -300; policy accept;
+        oifname "p-*" drop
+    }
     counter passed { }
     counter delivered { }
     counter neighbor_discovery { }
