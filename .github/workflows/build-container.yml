@@ -88,13 +88,13 @@ jobs:
             platform: linux/arm64
             runner: ubuntu-24.04-arm
           - component: spoofer
-            image: as218822-spoofer
+            image: as218822
             context: routing/spoofer
             architecture: amd64
             platform: linux/amd64
             runner: ubuntu-24.04
           - component: spoofer
-            image: as218822-spoofer
+            image: as218822
             context: routing/spoofer
             architecture: arm64
             platform: linux/arm64
@@ -185,7 +185,7 @@ jobs:
           - component: console
             image: as218822-console
           - component: spoofer
-            image: as218822-spoofer
+            image: as218822
     runs-on: ubuntu-24.04
     steps:
       - name: Download image digests
@@ -211,8 +211,8 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/pmh-only/${{ matrix.image }}
           tags: |
-            type=raw,value=latest,enable={{is_default_branch}}
-            type=sha
+            type=raw,value=${{ matrix.component == 'spoofer' && 'spoofer' || 'latest' }},enable={{is_default_branch}}
+            type=sha,prefix=${{ matrix.component == 'spoofer' && 'spoofer-sha-' || 'sha-' }}
 
       - name: Merge and publish manifests
         working-directory: /tmp/digests
@@ -236,4 +236,4 @@ jobs:
           docker buildx imagetools create "${tag_args[@]}" "${digest_args[@]}"
 
       - name: Inspect published image
-        run: docker buildx imagetools inspect "${{ env.REGISTRY }}/pmh-only/${{ matrix.image }}:latest"
+        run: docker buildx imagetools inspect "${{ env.REGISTRY }}/pmh-only/${{ matrix.image }}:${{ matrix.component == 'spoofer' && 'spoofer' || 'latest' }}"

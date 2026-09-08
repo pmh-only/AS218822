@@ -72,7 +72,7 @@ def expect(label, send, name, table="as218822_sav"):
             print(f"PASS {label}", flush=True)
             return
         time.sleep(0.01)
-    raise AssertionError(f"{label}: {name} did not increment by one")
+    raise AssertionError(f"{label}: {name} expected {before + 1}, got {counter(name, table)}")
 
 
 def load(config):
@@ -109,6 +109,9 @@ for interface in ("client", "lunalight", "tailscale0", "core"):
     run("ip", "link", "add", interface, "type", "veth", "peer", "name", "p-" + interface)
     for side in (interface, "p-" + interface):
         run("ip", "link", "set", side, "addrgenmode", "none")
+        if side.startswith("p-"):
+            # Injected peers must not add unsolicited MLD packets to drop counters.
+            run("ip", "link", "set", side, "multicast", "off")
         run("ip", "link", "set", side, "up")
     run("ip", "-6", "address", "add", "fd00:ffff::1/128", "dev", interface, "nodad")
 
@@ -116,6 +119,7 @@ for interface in ("bgptunnel-es", "zt-test", "hkix-gretap", "uplink"):
     if interface == "zt-test":
         run("ip", "link", "add", interface, "type", "veth", "peer", "name", "p-zt-test")
         run("ip", "link", "set", "p-zt-test", "addrgenmode", "none")
+        run("ip", "link", "set", "p-zt-test", "multicast", "off")
         run("ip", "link", "set", "p-zt-test", "up")
     else:
         run("ip", "link", "add", interface, "type", "dummy")
@@ -204,6 +208,8 @@ expect("Vultr link-local unicast neighbor probe", lambda: local("fe80::1", "2606
 for path, expected in (
     ("edge/gre-gateway/tunnels/wireguard/lunalight.conf", {"fd00:218:822:2014:23::1/128", "2a0f:6284:b::/48", "2a0f:6284:c::/48"}),
     ("edge/vultr/tunnels/wireguard/core.conf", {"fd00:218:822:473::/128", "2a06:9801:ff0::/44"}),
+    ("tunnels/wireguard/spoofer-a.conf", {"fd00:218:822:38::1/128", "2a06:9801:ff0:100::/64"}),
+    ("tunnels/wireguard/spoofer-b.conf", {"fd00:218:822:84::1/128", "2a06:9801:ff0:101::/64"}),
 ):
     lines = (Path("/routing") / path).read_text().splitlines()
     allowed = [line.split("=", 1)[1] for line in lines if line.startswith("AllowedIPs")]
