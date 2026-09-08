@@ -1,0 +1,18 @@
+# Included inside each router's dedicated table, never the host's filter table.
+counter local_spoof { }
+chain local_source {
+    type filter hook output priority -150; policy accept;
+    ip6 daddr 2000::/3 ip6 saddr != @transport6 ip6 saddr != $local6 counter name local_spoof drop
+}
+
+counter egress_spoof { }
+counter egress_valid { }
+chain upstream_source {
+    ip6 saddr { 2a06:9801:ff0::/44, 2a0f:6284:b::/48, 2a0f:6284:c::/48 } counter name egress_valid return
+    # Provider-assigned addresses are allowed only for locally generated traffic.
+    meta iif 0 ip6 saddr @transport6 counter name egress_valid return
+    meta iif 0 ip saddr @transport4 counter name egress_valid return
+    meta iif 0 ip6 saddr fe80::/10 ip6 daddr { fe80::/10, ff02::/16 } ip6 hoplimit 255 icmpv6 type { nd-router-solicit, nd-neighbor-solicit, nd-neighbor-advert } return
+    meta iif 0 ip6 saddr :: ip6 daddr ff02::/16 ip6 hoplimit 255 icmpv6 type nd-neighbor-solicit return
+    counter name egress_spoof drop
+}

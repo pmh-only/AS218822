@@ -263,6 +263,12 @@ done
 trap cleanup EXIT
 trap terminate INT TERM
 
+# Replace only our table, atomically, before any tunnel can carry traffic.
+# Keep it installed on exit so a restart never opens an unfiltered interval.
+if [ "${BIRD_VALIDATE:-0}" != 1 ]; then
+    nft -f /etc/bird/source-validation.nft
+fi
+
 if [ "${ENABLE_IPV6_FORWARDING:-0}" = 1 ] && [ "${BIRD_VALIDATE:-0}" != 1 ]; then
     forwarding_path=${IPV6_FORWARDING_PATH:-/proc/sys/net/ipv6/conf/all/forwarding}
     if [ ! -w "$forwarding_path" ]; then

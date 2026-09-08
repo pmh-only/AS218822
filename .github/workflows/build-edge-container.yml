@@ -7,6 +7,7 @@ on:
       - "routing/Dockerfile"
       - "routing/render-bird-config"
       - "routing/policy.conf"
+      - "routing/source-validation.nft"
       - ".github/workflows/validate-bird.yml"
       - "routing/edge/**"
   push:
@@ -17,6 +18,7 @@ on:
       - "routing/Dockerfile"
       - "routing/render-bird-config"
       - "routing/policy.conf"
+      - "routing/source-validation.nft"
       - ".github/workflows/validate-bird.yml"
       - "routing/edge/**"
 

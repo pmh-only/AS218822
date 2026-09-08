@@ -1,0 +1,16 @@
+add table inet as218822_sav
+delete table inet as218822_sav
+table inet as218822_sav {
+    counter ingress_spoof { }
+    chain stub_source {
+        type filter hook prerouting priority -300; policy accept;
+        iifname "core" ip6 saddr fd00:218:822:473:: ip6 daddr fd00:218:822:473::1 return
+        iifname "core" ip6 saddr 2a06:9801:ff0::/44 return
+        iifname "core" counter name ingress_spoof drop
+    }
+    counter local_spoof { }
+    chain local_source {
+        type filter hook output priority -150; policy accept;
+        ip6 daddr 2000::/3 ip6 saddr != { 2a06:9801:ff0::/44, 2401:c080:1c02:bc5:5400:6ff:fe9f:8b3e, fd00:218:822:473::1 } counter name local_spoof drop
+    }
+}

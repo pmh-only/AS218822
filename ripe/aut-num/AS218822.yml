@@ -62,6 +62,8 @@ objects:
         value: 'NOC: https://as218822.net'
       - name: remarks
         value: 'Peering policy: Open'
+      - name: remarks
+        value: 'Routing security policy: https://as218822.net/peering/'
       - name: notify
         value: pmh_only@pmh.codes
       - name: created
@@ -114,6 +116,10 @@ objects:
         value: afi ipv6.unicast from AS201423 accept AS201423
       - name: mp-export
         value: afi ipv6.unicast to AS201423 announce AS218822
+      - name: mp-import
+        value: afi ipv6.unicast from AS203168 accept ANY
+      - name: mp-export
+        value: afi ipv6.unicast to AS203168 announce AS218822
     link:
       href: https://rest.db.ripe.net/ripe/aut-num/AS218822
       type: locator

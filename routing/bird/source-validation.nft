@@ -1,0 +1,33 @@
+define local6 = { 2a06:9801:ff0::/44, fd00:218:822:100::, fd00:218:822:473:: }
+
+add table inet as218822_sav
+delete table inet as218822_sav
+table inet as218822_sav {
+    set transport6 {
+        type ipv6_addr
+        elements = { 2a0c:9a40:a004::1e, 2a0c:9a40:a008::4a,
+            2a11:6c7:f08:1b::2, fd00:200:21::17, fd00:200:120::8,
+            fd00:200:64::5, 2a0e:8f01:1000:16::157,
+            2a0e:8f01:1000:9::151, 2a0e:8f01:1000:78::117 }
+    }
+    set transport4 {
+        type ipv4_addr
+        elements = { 10.249.16.30, 10.249.20.74, 100.65.16.110 }
+    }
+
+    include "/etc/bird-source-validation.nft"
+
+    counter ingress_spoof { }
+    chain stub_source {
+        type filter hook prerouting priority -300; policy accept;
+        # Tailscale authenticates individual peers; reject non-tailnet sources too.
+        iifname "tailscale0" meta nfproto ipv6 ip6 saddr != fd7a:115c:a1e0::/48 counter name ingress_spoof drop
+        iifname "tailscale0" meta nfproto ipv4 ip saddr != 100.64.0.0/10 counter name ingress_spoof drop
+    }
+    chain egress {
+        # Tailscale SNAT runs at priority 100. Validate the actual on-wire source.
+        type filter hook postrouting priority 110; policy accept;
+        oifname { "bgptunnel-es", "bgptunnel-no", "hyehost-uk", "hyehost-us", "hyehost-nz", "route64-sg" } jump upstream_source
+        oifname "zt*" jump upstream_source
+    }
+}

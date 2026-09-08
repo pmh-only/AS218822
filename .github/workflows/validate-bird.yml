@@ -41,6 +41,16 @@ jobs:
             --volume "$PWD/routing/tests:/tests:ro" \
             as218822-bird sh /tests/policy.sh
 
+      - name: Build isolated packet test image
+        run: docker build --tag as218822-routing-tests routing/tests
+
+      - name: Test source validation and post-SNAT filtering
+        run: |
+          docker run --rm --network none --cap-add NET_ADMIN --cap-add NET_RAW \
+            --sysctl net.ipv6.conf.all.forwarding=1 --sysctl net.ipv4.ip_forward=1 \
+            --volume "$PWD/routing:/routing:ro" \
+            as218822-routing-tests python3 /routing/tests/source-validation.py
+
       - name: Parse tracked configuration
         run: |
           docker run --rm \

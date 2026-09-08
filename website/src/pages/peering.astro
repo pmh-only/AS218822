@@ -16,27 +16,52 @@ const policy = [
   {
     number: "02",
     title: "What we exchange",
-    body: "Sessions use IPv6 unicast. We announce AS218822 and customer routes published under our routing objects.",
+    body: "Sessions use IPv6 unicast with default-deny exports. The AS set includes AS218822 and AS201423; the route set lists only our own origins. The GRE and Vultr edges export our aggregate, while the core may also export the two approved Lunalight routes.",
     items: [
       "AS-SET: RIPE::AS218822:AS-PMHONLY",
       "ROUTE-SET: RIPE::AS218822:RS-PREFIXES",
       "Primary aggregate: 2a06:9801:ff0::/44",
+      "Cloud-managed origin: 2a06:9801:ffa::/48 (AS218822)",
+      "Lunalight origins: 2a0f:6284:b::/48 and 2a0f:6284:c::/48 (AS201423)",
       "No IPv4 routes",
     ],
   },
   {
     number: "03",
     title: "How we filter",
-    body: "Routing policy is generated from public registry data. Incorrect or unsafe announcements are rejected at the edge.",
+    body: "Prefix and origin allowlists are reviewed against public registry data and maintained in version control, not automatically generated from IRR data. Public transit imports reject RPKI Invalid routes; customer routes must be RPKI Valid.",
     items: [
-      "IRR prefix and origin validation",
-      "RPKI route origin validation",
+      "Exact customer prefix and single-origin AS-path allowlists",
+      "Customer prepending is allowed; third-party transit paths are not",
+      "RPKI revalidation through an RTR cache and BGP import tables",
       "Default and martian route rejection",
       "Session-specific maximum-prefix limits",
     ],
   },
   {
     number: "04",
+    title: "Source validation",
+    body: "Customer tunnel ingress is restricted to authorized source prefixes. Our core and GRE gateway check external tunnel traffic after source NAT, preserving the Tailscale exit path while rejecting unrelated source addresses.",
+    items: [
+      "WireGuard source allowlists and nftables ingress checks",
+      "Tailscale peer authentication and tailnet source checks",
+      "Owned and approved customer prefixes only on routing-tunnel egress",
+      "Provider transport addresses restricted to router-generated traffic",
+    ],
+  },
+  {
+    number: "05",
+    title: "Before activation",
+    body: "New customer sessions and prefix changes require authorization checks before they are enabled. An ASN, registry object, or tunnel key alone does not establish the requester's authority.",
+    items: [
+      "Confirm the request through an independently obtained registry contact",
+      "Review address delegation, route6 origin, and exact ROA coverage",
+      "Retain dated authorization and review prefix, path, and source filters together",
+      "Recheck registry data and contacts monthly and after changes",
+    ],
+  },
+  {
+    number: "06",
     title: "Operating terms",
     body: "AS218822 is a personal research network. Peering is provided on a best-effort basis and may change as the network evolves.",
     items: [
@@ -234,6 +259,7 @@ const policy = [
         border-top: 1px solid rgb(255 255 255 / 8%);
         color: #d7d1da;
         font-size: 0.8rem;
+        overflow-wrap: anywhere;
       }
 
       li::before { color: #a74dff; content: "+"; }
@@ -337,7 +363,7 @@ const policy = [
     <main>
       <section class="hero shell" aria-labelledby="page-title">
         <div>
-          <p class="kicker">Peering policy / v1.0</p>
+          <p class="kicker">Peering policy / v1.1</p>
           <h1 id="page-title">Let’s move <span>packets.</span></h1>
           <p class="intro">
             AS218822 is an open, IPv6-only research network. We peer without
@@ -379,11 +405,11 @@ const policy = [
             IPv6 address, and expected maximum-prefix count. Tunnel proposals
             should also include the preferred tunnel type and endpoint.
           </p>
-          <p class="request-meta">Peering and operational contact</p>
+          <p class="request-meta">Peering, operations, and abuse contact</p>
           <a class="request-link" href="mailto:pmh_only@pmh.codes?subject=Peering%20request%20for%20AS218822">
             pmh_only@pmh.codes <span aria-hidden="true">-&gt;</span>
           </a>
-          <p class="request-note">Requests are reviewed on a best-effort basis.</p>
+          <p class="request-note">Requests are reviewed on a best-effort basis. These controls are not a claim of MANRS membership or certification.</p>
         </div>
       </section>
     </main>
@@ -393,6 +419,7 @@ const policy = [
       <nav class="footer-links" aria-label="Network resources">
         <a href="/">Looking glass</a>
         <a href="https://www.peeringdb.com/asn/218822">PeeringDB</a>
+        <a href="https://github.com/pmh-only/AS218822/blob/main/routing/MANRS.md">Security evidence</a>
         <a href="https://github.com/pmh-only/AS218822">Source</a>
       </nav>
     </footer>

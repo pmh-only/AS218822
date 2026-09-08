@@ -6,7 +6,7 @@ FROM debian:trixie-slim
 ARG CONFIG_ROOT=.
 
 RUN apt-get update \
-    && apt-get install --no-install-recommends -y bird2 ca-certificates gettext-base iproute2 libstdc++6 tini wireguard-tools \
+    && apt-get install --no-install-recommends -y bird2 ca-certificates gettext-base iproute2 libstdc++6 nftables tini wireguard-tools \
     && rm -rf /var/lib/apt/lists/* \
     && chmod 0755 /etc/bird \
     && install -d -o bird -g bird /run/bird
@@ -18,6 +18,7 @@ RUN ln -s zerotier-one /usr/sbin/zerotier-cli \
 COPY ${CONFIG_ROOT}/bird /etc/bird
 COPY ${CONFIG_ROOT}/tunnels /etc/tunnels
 COPY policy.conf /etc/bird-policy.conf
+COPY source-validation.nft /etc/bird-source-validation.nft
 COPY --chmod=0755 render-bird-config /usr/local/bin/render-bird-config
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
