@@ -127,33 +127,40 @@ are not automatically authorized by this table.
 
 ## Verification and Remaining Evidence
 
-### Dedicated Measurement Segments
+### Archived Measurement Results
 
-The core routes `2a06:9801:ff0:100::/64` and `2a06:9801:ff0:101::/64` to
-separate WireGuard peers for one-shot CAIDA measurements. Each peer is restricted
-to its assigned /64 and exact peering /128 using the same source-validation
-mechanism as a routed stub adjacency. These are internal measurement subnets,
-not additional BGP announcements; only the existing /44 covers them externally.
+The September 8, 2026 CAIDA measurements used separate routed WireGuard subnets
+behind the core. Each peer was restricted to its assigned /64 and exact peering
+/128 using the same source-validation mechanism as a routed stub adjacency.
+Clients ran outside the router's network namespace and traversed its normal
+forwarding path, without NAT on the measured IPv6 packets. The internal /64s
+were covered by the existing /44, not announced separately through BGP.
 
-The measurement clients run in separate pod network namespaces, use public IPv6
-addresses without SNAT, and traverse the core's normal forwarding path. They do
-not run inside a router namespace, where link-layer injection could bypass the
-router's host-local firewall. Only IPv6 is tested on these segments. IPv4 cloud
-underlay reports are separate evidence and must not be attributed to AS218822.
-New runs use an IPv4-only ClusterIP service for the encrypted WireGuard transport
-so endpoint discovery survives router pod replacement or sidecar unavailability.
-This does not NAT the measured IPv6 packets. Startup retries are bounded and do
-not start the prober until endpoint configuration and a handshake succeed.
+| Measurement Subnet | Successful Report | Baseline Report |
+| --- | --- | --- |
+| `2a06:9801:ff0:100::/64` | [2229220](https://spoofer.caida.org/report.php?sessionid=2229220) | [2229072](https://spoofer.caida.org/report.php?sessionid=2229072) |
+| `2a06:9801:ff0:101::/64` | [2229273](https://spoofer.caida.org/report.php?sessionid=2229273) | [2229071](https://spoofer.caida.org/report.php?sessionid=2229071) |
 
-`routing/spoofer` builds the upstream CAIDA 1.5.0 standalone client, without its
-scheduler or GUI. Jobs opt into public anonymized results, keep TLS verification
-enabled, and do not share unanonymized results for remediation. Private peer keys
-are held in a namespace/name-bound SealedSecret in the infrastructure repository.
-Completed Jobs are retained for their logs; they have no TTL or automatic retry
-that could cause GitOps to repeat public tests. Repeating a measurement requires
-an explicit new Job in GitOps. Inspect the reported source address, ASN, and
-outcomes before treating a report as evidence; dedicated measurement segments
-do not establish coverage of every customer, cloud service, or underlay.
+Both successful runs were attributed to AS218822 with no NAT. Both clients
+received full server summaries reporting blocked outbound private/routable
+spoofing and blocked inbound private/internal-source spoofing, and exited 0.
+Addresses within each authorized /64 remained permitted by design. These are
+IPv6 results, not proof of IPv4 or all cloud-workload coverage.
+
+The one-shot Jobs, transport service, SealedSecret and generated Secret, and
+temporary core interfaces/routes were subsequently removed through GitOps.
+Keeping completed Job manifests in the active desired state lets Argo CD
+recreate them if they disappear, even without retries or a TTL. The successful
+reports remain above, while deployment history and captured operator logs retain
+the run details. Production ingress and egress protections remain enabled.
+
+`routing/spoofer` remains available to build the CAIDA 1.5.0 standalone client,
+without its scheduler or GUI. Any future run requires explicitly reviewed
+routing, credentials, and fresh Job manifests; it is not scheduled automatically.
+Use public anonymized sharing and TLS verification, inspect the actual source
+address/ASN and all outcomes, and remove run-specific resources after archiving
+the evidence. Do not treat measurement segments as proof of coverage of every
+customer, cloud service, or underlay.
 
 The initial IPv6 reports are retained at
 [session 2229072](https://spoofer.caida.org/report.php?sessionid=2229072) and
