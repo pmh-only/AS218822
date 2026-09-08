@@ -8,7 +8,7 @@ web
 
 ## Users
 
-The primary audience is the interested public: visitors who want to understand whether AS218822 is operating reliably without needing access to its private infrastructure. Network peers and operators may also use the console, so established routing terminology remains appropriate.
+The console serves the interested public and authenticated network operators. Public visitors verify AS218822's operation without private infrastructure access. Operators can sign in through environment-configured OIDC to inspect private diagnostics in the same dashboard. Established routing terminology remains appropriate for both audiences.
 
 ## Product Purpose
 
@@ -22,12 +22,13 @@ Unlike a generic status page or unrestricted metrics browser, the console expose
 
 ## Operating Context
 
-The console is a public, read-only web application at `bgp.pmh.codes`. It refreshes telemetry automatically and supports manual refresh. Visitors inspect current summary metrics, six hours of BGP availability, individual BGP session state, external IPv6 probes, Kubernetes workload readiness, and active AS218822 alerts.
+The console is a read-only web application at `bgp.pmh.codes`. It supports automatic or manual refresh and one-, six-, and 24-hour windows. Public visitors inspect routing topology, session history, transport rates, IPv6 reachability, RPKI validation, workloads, alerts, and source health. Authenticated operators additionally inspect namespace resources, private placement and addresses, backing-node health, interfaces, storage, and collector/repository diagnostics.
 
 ## Capabilities and Constraints
 
 - Preserve anonymous public access to core status information without requiring login.
 - Expose only curated monitoring data through the constrained `/api/status` endpoint; do not expose arbitrary Prometheus queries or infrastructure controls.
+- Protect `/api/operator` on the server with OIDC and explicit identity access rules. Missing OIDC configuration must never make private data public.
 - Retain accurate network terminology including BGP, RPKI, VRPs, probes, sessions, and workloads.
 - Treat Prometheus as the telemetry source and handle temporary monitoring failure without presenting stale data as current.
 - Remain a lightweight Astro application served by its Node HTTP server and deployed as a non-root, read-only container in Kubernetes.
@@ -39,8 +40,8 @@ Use the established names `AS218822` and `AS218822 / Live Console`. Communicatio
 ## Evidence on Hand
 
 - `src/pages/index.astro` contains the current dashboard content, states, terminology, and responsive implementation.
-- `server.mjs` defines the constrained telemetry contract and security boundaries.
-- `server.test.mjs` verifies representative BGP, router, workload, alert, and RPKI data handling.
+- `server.mjs`, `monitoring.mjs`, and `auth.mjs` define the telemetry contract and security boundaries; `OPERATIONS.md` documents configuration and metric limitations.
+- `server.test.mjs`, `monitoring.test.mjs`, and `auth.test.mjs` verify telemetry handling, access isolation, and signed OIDC flows.
 - The deployment and public hostname are defined in the infrastructure GitOps repository at `../lab/as218822/console.yml`.
 - The repository contains operational routing configuration and public registry data for AS218822. Future work must not invent reliability claims, historical performance, users, testimonials, or certifications not supported by real data.
 

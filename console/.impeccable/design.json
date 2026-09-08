@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-08T00:24:00Z",
+  "title": "Design System: AS218822 Console",
+  "extensions": {
+    "shadows": [{ "name": "topology-node", "value": "0 0.5rem 1.5rem rgb(0 0 0 / 32%)", "purpose": "Inherited topology nodes only; ordinary panels remain flat." }],
+    "motion": [{ "name": "chart-animation", "value": "none", "purpose": "Telemetry updates without chart entrance animation." }],
+    "breakpoints": [{ "name": "toolbar-stack", "value": "82rem" }, { "name": "panel-stack", "value": "66rem" }, { "name": "mobile", "value": "42rem" }]
+  },
+  "components": [
+    {
+      "name": "Secondary Action", "kind": "button", "description": "Carbon secondary action used for manual refresh.",
+      "html": "<button class=\"ds-action\">Refresh</button>",
+      "css": ".ds-action{background:#6f6f6f;color:#fff;border:0;border-radius:0;padding:8px 16px;font:14px 'IBM Plex Sans',sans-serif;cursor:pointer}.ds-action:hover{background:#606060}.ds-action:active{background:#393939}.ds-action:focus-visible{outline:2px solid #fff;outline-offset:2px}"
+    },
+    {
+      "name": "Search", "kind": "input", "description": "Compact filter for a telemetry table.",
+      "html": "<input class=\"ds-search\" aria-label=\"Search telemetry\" placeholder=\"Search telemetry\" />",
+      "css": ".ds-search{background:#262626;color:#f4f4f4;border:0;border-bottom:1px solid #525252;padding:16px;font:14px 'IBM Plex Sans',sans-serif}.ds-search::placeholder{color:#a8a8a8}.ds-search:hover{background:#353535}.ds-search:focus-visible{outline:2px solid #fff;outline-offset:-2px}"
+    },
+    {
+      "name": "Section Navigation", "kind": "nav", "description": "Sticky, horizontally scrollable section links.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Telemetry sections\"><a href=\"#routing\">Routing</a><a href=\"#traffic\">Traffic</a></nav>",
+      "css": ".ds-nav{display:flex;gap:20px;background:#161616;padding:12px 0;overflow-x:auto;border-block:1px solid #525252}.ds-nav a{color:#c6c6c6;font:14px 'IBM Plex Sans',sans-serif;text-decoration:none;padding:8px 0}.ds-nav a:hover{color:#78a9ff;text-decoration:underline;text-underline-offset:6px}.ds-nav a:focus-visible{outline:2px solid #fff}"
+    },
+    {
+      "name": "State Tag", "kind": "chip", "description": "A measured state always has a readable label.",
+      "html": "<span class=\"ds-state\">Established</span>",
+      "css": ".ds-state{display:inline-block;border-radius:16px;padding:2px 8px;background:#0e6027;color:#a7f0ba;font:12px 'IBM Plex Sans',sans-serif}"
+    },
+    {
+      "name": "Telemetry Panel", "kind": "card", "refersTo": "panel", "description": "A flat, square-cornered group of related measurements.",
+      "html": "<section class=\"ds-panel\"><h3>Collector health</h3><p>Actual sample age, not API refresh time.</p></section>",
+      "css": ".ds-panel{background:var(--cds-layer-01,#262626);color:var(--cds-text-primary,#f4f4f4);padding:20px;border-radius:0;font-family:'IBM Plex Sans',sans-serif}.ds-panel h3{font-size:18px;font-weight:500;line-height:1.4;margin:0}.ds-panel p{color:var(--cds-text-secondary,#c6c6c6);font-size:12px;line-height:1.5;margin:6px 0 0}"
+    }
+  ],
+  "narrative": {
+    "overview": "The console inherits Carbon g100 rather than introducing a separate visual identity. It is an operational surface: dense, precise, restrained, and built around reading measurements.",
+    "keyCharacteristics": ["Carbon g100", "Tabular measurements", "Flat panels", "Inspectable visualizations", "Explicit data and access states"],
+    "rules": [],
+    "dos": ["Do preserve Carbon's component grammar and the existing network terminology.", "Do show measurement units, time windows, data freshness, and coverage limits.", "Do use semantic HTML, visible focus, and table alternatives to graphs.", "Do keep private and public content visually coherent while labeling access."],
+    "donts": ["Don't show an absent measurement as zero or a stale measurement as live.", "Don't add decorative motion, invented reliability claims, or a new brand system."]
+  }
+}

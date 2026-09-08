@@ -188,7 +188,7 @@ function buildTopology(protocols) {
   return { nodes, edges, bgp, locations };
 }
 
-export default function NetworkTopology({ protocols }) {
+export default function NetworkTopology({ protocols, stale = false }) {
   const { nodes, edges, bgp, locations } = buildTopology(protocols);
   const established = bgp.filter((protocol) => protocol.up).length;
 
@@ -202,7 +202,7 @@ export default function NetworkTopology({ protocols }) {
         <span><i className="topology-key topology-key--up" />Established {established}</span>
         <span><i className="topology-key topology-key--down" />Down {bgp.length - established}</span>
         <span>{locations.length} routing locations</span>
-        <span>Live data</span>
+        <span>{stale ? "Stale or incomplete snapshot" : "Current snapshot"}</span>
       </div>
       <div className="topology-canvas" role="img" aria-label={`Live BGP topology with ${locations.length} routing locations and ${established} of ${bgp.length} sessions established`}>
         <ReactFlow

@@ -2,16 +2,19 @@ FROM node:24-alpine AS build
 
 WORKDIR /app
 RUN corepack enable
-COPY package.json pnpm-workspace.yaml ./
-RUN pnpm install --no-frozen-lockfile
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
 COPY astro.config.mjs tsconfig.json ./
 COPY src ./src
-RUN pnpm build
+COPY server.mjs auth.mjs monitoring.mjs *.test.mjs ./
+RUN pnpm build && pnpm test && pnpm prune --prod
 
 FROM node:24-alpine
 
 WORKDIR /app
-COPY --chown=node:node server.mjs ./
+ENV NODE_ENV=production
+COPY --chown=node:node server.mjs auth.mjs monitoring.mjs ./
+COPY --chown=node:node --from=build /app/node_modules ./node_modules
 COPY --chown=node:node --from=build /app/dist ./dist
 
 USER node
