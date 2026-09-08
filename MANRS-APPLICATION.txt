@@ -1,0 +1,271 @@
+MANRS Network Operator Application
+Prepared: September 8, 2026
+Status: Draft for review; not submitted or accepted.
+
+SUBMISSION CHECKS
+
+1. AS218822 has not yet completed MANRS's standard three-month global routing
+   visibility period. RIPE RIS first observed it on September 1, 2026. The normal
+   threshold would be around December 1, 2026, assuming continued visibility.
+   The Action 1 optional-details response below discloses this and requests
+   guidance on early review or an exception.
+2. Confirm that the documented customer-verification procedure has actually been
+   followed for AS201423 and that dated authorization evidence is retained.
+3. Confirm that pmh_only@pmh.codes is actively monitored and that MANRS contact
+   verification messages can be answered within 72 hours, alongside the applicable
+   routing-incident response obligations.
+4. These AS218822 CAIDA measurements cover IPv6. MANRS must confirm how its IPv4
+   testing requirement applies to this IPv6-only routing service.
+5. Consent remains the applicant's decision. The choices below reflect the
+   applicant's supplied form and do not constitute a submission.
+
+Requirements: https://manrs.org/netops/actions/
+Visibility evidence: https://stat.ripe.net/data/routing-status/data.json?resource=AS218822
+
+
+1. OPERATOR INFORMATION
+
+Organization Name:
+Minhyeok Park
+
+Organization Website:
+https://pmh.codes
+
+Areas Served:
+KR
+
+AS Number(s) of Your Networks:
+218822
+
+Contact Name:
+Minhyeok Park
+
+Contact Email:
+pmh_only@pmh.codes
+
+
+2. MANRS ACTIONS
+
+ACTION 1: PREVENT PROPAGATION OF INCORRECT ROUTING INFORMATION
+
+Has your organization implemented Action 1?
+Yes, we prevent propagation of incorrect routing information.
+
+Describe your implementation of Action 1. (Confidential, Mandatory)
+
+AS218822 operates an IPv6 routing service using BIRD 2. We maintain explicit
+prefix and AS-path allowlists in version control following manual review of
+authoritative RIR records, IRR route6 objects, and RPKI origin authorizations.
+We do not use an automatic IRR-to-filter generator.
+
+The core originates only 2a06:9801:ff0::/44. Customer propagation is restricted
+to AS201423's exact prefixes, 2a0f:6284:b::/48 and 2a0f:6284:c::/48. Their AS
+paths must consist solely of AS201423, with prepending permitted, and their
+origins must be RPKI Valid. RPKI Invalid and NotFound customer routes are rejected.
+
+External exports are default-deny. Customer routes must arrive through the
+approved internal routing path before external export. The GRE and Vultr edges
+export only the aggregate received from the core. Unrelated transit routes
+cannot be re-exported as our own or approved customer announcements.
+
+Transit imports apply prefix-length and AS-path sanity checks and reject
+defaults, local address space, specified special-purpose prefixes,
+reserved/private ASNs, and RPKI Invalid routes.
+
+Adjacent operators can identify our intended announcements through our public
+routing policy, RIPE aut-num and route6 objects, and AS set
+RIPE::AS218822:AS-PMHONLY.
+
+How frequently are these filters updated? (Confidential, Mandatory)
+
+Our policy requires allowlists to be updated whenever authorized prefixes,
+customer relationships, or interconnections change, before the corresponding
+announcements are enabled. The documented review cadence for registry data,
+authorization records, and existing allowlists is monthly.
+
+RPKI updates are handled separately through an RTR cache. The router's RTR
+refresh interval is configured to 600 seconds, and BGP import/export tables
+support automatic filter revalidation when the ROA table changes. This does not
+automatically regenerate the manually maintained IRR-derived allowlists.
+
+What mechanism is used to check that a customer legitimately holds the ASN and
+IP blocks they intend to announce? (Confidential, Mandatory)
+
+Our documented onboarding procedure requires checking the customer's ASN
+assignment and address allocation or delegation in the authoritative RIR
+database, verifying the corresponding IRR route6 origin, and checking valid
+ROA coverage for each intended prefix and origin ASN.
+
+The requester's authority must also be confirmed through an independently
+obtained registered operational contact or an authenticated resource-maintainer
+channel. Dated authorization or an LOA, together with the reviewer's identity,
+must be retained privately.
+
+A BGP session, tunnel key, or PeeringDB entry alone is not accepted as proof of
+authority. Only explicitly approved prefixes and AS paths are enabled;
+additional prefixes or downstream ASNs require another review.
+
+Other implementation details (Confidential, Optional)
+
+The customer session has a two-route import limit and a ten-route receive limit,
+with disable actions on excess. CI validates BIRD configuration and tests
+rejection of incorrect prefixes, unauthorized AS paths, and routes without
+valid origin authorization. Deployment is performed through GitOps.
+
+Implementation documentation:
+https://github.com/pmh-only/AS218822/blob/main/routing/MANRS.md
+
+AS218822 is newly established. RIPE RIS records its first visibility on
+September 1, 2026, so it has not yet completed the standard three-month global
+routing visibility period. Please advise whether an early review or an
+exception is possible.
+
+Comment on Action 1 (Public, Mandatory)
+
+AS218822 uses explicit IPv6 prefix and AS-path allowlists, RPKI origin
+validation, and default-deny export policies to prevent unauthorized
+announcements and route leaks. Our routing policy is publicly documented at
+https://as218822.net/peering/.
+
+
+ACTION 2: PREVENT TRAFFIC WITH SPOOFED SOURCE IP ADDRESSES
+
+Has your organization implemented Action 2?
+Yes, we prevent traffic with spoofed source IP addresses.
+
+Link to CAIDA Spoofer Results:
+https://spoofer.caida.org/report.php?sessionid=2229273
+
+Describe your implementation of Action 2. (Confidential)
+
+Our deployed core, GRE gateway, and Vultr edge apply source-address validation
+using explicit interface and prefix policies.
+
+Customer WireGuard ingress is restricted to the customer's authorized source
+prefixes and exact peering address. Corresponding nftables checks protect both
+router input and forwarding. Tailscale end-user access uses authenticated peers
+and additional tailnet source-prefix checks.
+
+External ingress rejects packets claiming sources from the locally routed
+infrastructure prefix 2a06:9801:ff0::/48 or our Tailscale IPv6 prefix. Legitimate
+internal, multihomed-customer, and separately routed cloud traffic is preserved.
+
+External routing-tunnel egress is restricted to our owned aggregate and approved
+customer prefixes. Provider transport addresses are restricted to
+router-originated traffic. Egress validation runs after source NAT, and scoped
+IPv6 control-traffic exceptions preserve neighbor discovery and
+multicast-listener operation.
+
+Following remediation of an ingress-filtering gap, we ran CAIDA Spoofer on
+September 8, 2026 from two separate routed, non-NAT IPv6 measurement segments
+behind the core: 2a06:9801:ff0:100::/64 and 2a06:9801:ff0:101::/64. Public
+anonymized sharing was enabled.
+
+The successful post-remediation reports are:
+
+https://spoofer.caida.org/report.php?sessionid=2229220
+
+https://spoofer.caida.org/report.php?sessionid=2229273
+
+CAIDA attributes both to AS218822 and reports no NAT. Both clients received
+complete server summaries confirming blocked outbound private and unrelated
+routable sources, and blocked inbound private and forged internal sources.
+Both exited successfully.
+
+Validation is prefix-based: each measurement peer is authorized to use its
+assigned /64. AS218822 does not originate IPv4 prefixes, and these AS218822
+measurements cover IPv6. Please confirm how the application's IPv4 testing
+requirement should be handled for this IPv6-only routing service.
+
+Comment on Action 2 (Public, Mandatory)
+
+AS218822 enforces source-prefix validation at customer boundaries, rejects
+forged local sources arriving from transit, and validates external
+routing-tunnel egress. Public CAIDA reports document successful IPv6
+anti-spoofing measurements from two non-NAT routed segments.
+
+
+ACTION 3: FACILITATE GLOBAL OPERATIONAL COMMUNICATION AND COORDINATION
+
+Has your organization implemented Action 3?
+Yes, we facilitate global operational communication and coordination between
+network operators.
+
+Describe your implementation of Action 3. (Confidential)
+
+AS218822's operational contact is Minhyeok Park at pmh_only@pmh.codes.
+Operational, peering, and abuse inquiries use this publicly listed address.
+
+Administrative and technical contacts are registered in the RIPE Database, and
+the abuse mailbox is published through role object ACRO65594-RIPE. Our
+PeeringDB profile provides network information and links to our website,
+routing policy, and looking glass.
+
+Public policy: https://as218822.net/peering/
+
+PeeringDB: https://www.peeringdb.com/asn/218822
+
+RIPE abuse contact: https://rest.db.ripe.net/ripe/role/ACRO65594-RIPE
+
+Our documented procedure calls for monthly contact checks and updates whenever
+contact information changes. The operator is responsible for handling
+routing-coordination and incident reports received through these contacts.
+
+Comment on Action 3 (Public, Mandatory)
+
+AS218822 publishes operational, peering, and abuse contact information through
+its website and RIPE Database records. Network operators can contact
+pmh_only@pmh.codes for routing coordination and incident reports.
+
+
+ACTION 4: FACILITATE VALIDATION OF ROUTING INFORMATION ON A GLOBAL SCALE
+
+Has your organization implemented Action 4?
+Yes, we facilitate validation of routing information on a global scale.
+
+Describe your implementation of Action 4. (Confidential)
+
+Our public routing policy is available at https://as218822.net/peering/.
+
+AS218822 is registered in the RIPE Database. The AS set
+RIPE::AS218822:AS-PMHONLY contains AS218822 and AS201423, identifying the origins
+covered by our external announcement policy. The route set
+RIPE::AS218822:RS-PREFIXES lists our own origins rather than the entire customer
+cone.
+
+The documented prefix/origin pairs are:
+
+AS218822: 2a06:9801:ff0::/44 and 2a06:9801:ffa::/48.
+
+AS201423: 2a0f:6284:b::/48 and 2a0f:6284:c::/48.
+
+Corresponding route6 objects are published in RIPE, and all four prefix/origin
+pairs were checked as RPKI Valid on September 8, 2026. The cloud-managed /48 is
+documented separately from the aggregate originated by our BIRD routers.
+
+Our RIPE aut-num object publishes import/export policy, and PeeringDB identifies
+the AS set adjacent operators can use to construct filters. The measurement
+/64s are internal subnets covered by the existing /44, not additional BGP
+announcements.
+
+Additional documentation:
+https://github.com/pmh-only/AS218822/blob/main/routing/MANRS.md
+
+Comment on Action 4 (Public, Mandatory)
+
+AS218822 publishes its routing policy, intended prefix/origin pairs, RIPE AS
+and route sets, and corresponding RPKI origin authorizations so other operators
+can validate our announcements and construct routing filters.
+
+
+3. CONSENT AND REVIEW
+
+Would you like to share a testimonial about why you decided to join MANRS?
+No
+
+Consent:
+I provide my expressly informed consent to the use of my Personal Data as
+described above and in the Privacy Policy for this site.
+
+Mailing List:
+Not right now, thanks.
