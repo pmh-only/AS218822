@@ -87,6 +87,18 @@ jobs:
             architecture: arm64
             platform: linux/arm64
             runner: ubuntu-24.04-arm
+          - component: spoofer
+            image: as218822-spoofer
+            context: routing/spoofer
+            architecture: amd64
+            platform: linux/amd64
+            runner: ubuntu-24.04
+          - component: spoofer
+            image: as218822-spoofer
+            context: routing/spoofer
+            architecture: arm64
+            platform: linux/arm64
+            runner: ubuntu-24.04-arm
     runs-on: ${{ matrix.runner }}
     steps:
       - name: Check out repository
@@ -172,6 +184,8 @@ jobs:
             image: as218822-looking-glass
           - component: console
             image: as218822-console
+          - component: spoofer
+            image: as218822-spoofer
     runs-on: ubuntu-24.04
     steps:
       - name: Download image digests

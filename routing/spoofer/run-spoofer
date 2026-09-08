@@ -1,0 +1,36 @@
+#!/bin/sh
+set -eu
+
+: "${SPOOFER_ADDRESS:?Public IPv6 address is required}"
+: "${SPOOFER_PEERING_ADDRESS:?WireGuard peering address is required}"
+: "${SPOOFER_ENDPOINT:?Core endpoint is required}"
+: "${SPOOFER_SERVER_PUBLIC_KEY:?Core public key is required}"
+test -r /run/wireguard/private.key
+
+ip link add spoofer0 type wireguard
+trap 'ip link delete spoofer0 2>/dev/null || true' EXIT
+trap 'exit 143' TERM INT
+wg set spoofer0 private-key /run/wireguard/private.key \
+    peer "$SPOOFER_SERVER_PUBLIC_KEY" endpoint "$SPOOFER_ENDPOINT" \
+    allowed-ips ::/0 persistent-keepalive 25
+ip -6 address add "$SPOOFER_PEERING_ADDRESS" dev spoofer0 nodad
+ip -6 address add "$SPOOFER_ADDRESS/64" dev spoofer0 nodad
+ip link set spoofer0 mtu 1280 up
+
+# Only IPv6 uses the routed segment. The encrypted transport stays on pod IPv4.
+# No NAT, host networking, or changes to the router's filtering are involved.
+ip -6 route add default dev spoofer0 src "$SPOOFER_ADDRESS"
+
+attempts=0
+until wg show spoofer0 latest-handshakes | grep -Eq '[[:space:]][1-9][0-9]*$'; do
+    attempts=$((attempts + 1))
+    if [ "$attempts" -ge 120 ]; then
+        echo 'Core WireGuard handshake did not complete; refusing to run measurement' >&2
+        exit 1
+    fi
+    sleep 1
+done
+
+printf 'CAIDA measurement source: %s (IPv6 only, no NAT)\n' "$SPOOFER_ADDRESS"
+# Public anonymized results only; TLS verification remains enabled.
+timeout --kill-after=10 600 spoofer-prober -6 -s1 -r0

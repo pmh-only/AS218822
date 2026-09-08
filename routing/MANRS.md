@@ -120,6 +120,32 @@ are not automatically authorized by this table.
 
 ## Verification and Remaining Evidence
 
+### Dedicated Measurement Segments
+
+The core routes `2a06:9801:ff0:100::/64` and `2a06:9801:ff0:101::/64` to
+separate WireGuard peers for one-shot CAIDA measurements. Each peer is restricted
+to its assigned /64 and exact peering /128 using the same source-validation
+mechanism as a routed stub adjacency. These are internal measurement subnets,
+not additional BGP announcements; only the existing /44 covers them externally.
+
+The measurement clients run in separate pod network namespaces, use public IPv6
+addresses without SNAT, and traverse the core's normal forwarding path. They do
+not run inside a router namespace, where link-layer injection could bypass the
+router's host-local firewall. Only IPv6 is tested on these segments. IPv4 cloud
+underlay reports are separate evidence and must not be attributed to AS218822.
+
+`routing/spoofer` builds the upstream CAIDA 1.5.0 standalone client, without its
+scheduler or GUI. Jobs opt into public anonymized results, keep TLS verification
+enabled, and do not share unanonymized results for remediation. Private peer keys
+are held in a namespace/name-bound SealedSecret in the infrastructure repository.
+Completed Jobs are retained for their logs; they have no TTL or automatic retry
+that could cause GitOps to repeat public tests. Repeating a measurement requires
+an explicit new Job in GitOps. Inspect the reported source address, ASN, and
+outcomes before treating a report as evidence; dedicated measurement segments
+do not establish coverage of every customer, cloud service, or underlay.
+
+### Local Tests
+
 CI parses all three BIRD configurations, tests public/customer route rejection
 with synthetic ROAs, and exercises source filters with packets inside an
 isolated Docker network namespace. No spoofed test traffic is sent to production

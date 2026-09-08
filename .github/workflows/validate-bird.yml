@@ -29,6 +29,18 @@ jobs:
       - name: Build looking glass image
         run: docker build --tag as218822-looking-glass routing/looking-glass
 
+      - name: Build and check one-shot Spoofer client without network access
+        run: |
+          docker build --tag as218822-spoofer routing/spoofer
+          docker run --rm --network none --cap-drop ALL --read-only \
+            --entrypoint sh as218822-spoofer -n /usr/local/bin/run-spoofer
+          docker run --rm --network none --cap-drop ALL --read-only \
+            --entrypoint /usr/local/bin/spoofer-prober as218822-spoofer --version
+          if docker run --rm --network none --cap-drop ALL --read-only as218822-spoofer; then
+            echo 'Spoofer unexpectedly ran without a configured measurement segment' >&2
+            exit 1
+          fi
+
       - name: Test looking glass health and input boundaries
         run: |
           docker run --rm --network none \
