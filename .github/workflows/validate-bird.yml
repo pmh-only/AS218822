@@ -56,6 +56,14 @@ jobs:
       - name: Build isolated packet test image
         run: docker build --tag as218822-routing-tests routing/tests
 
+      - name: Test Spoofer startup retries and error propagation offline
+        run: |
+          docker run --rm --network none --cap-drop ALL --read-only \
+            --tmpfs /tmp:rw,nosuid,nodev,exec,size=16m \
+            --tmpfs /run/wireguard:rw,nosuid,nodev,size=1m \
+            --volume "$PWD/routing:/routing:ro" \
+            as218822-routing-tests python3 /routing/tests/spoofer-runner.py
+
       - name: Test source validation and post-SNAT filtering
         run: |
           docker run --rm --network none --cap-add NET_ADMIN --cap-add NET_RAW \

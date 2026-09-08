@@ -140,6 +140,10 @@ addresses without SNAT, and traverse the core's normal forwarding path. They do
 not run inside a router namespace, where link-layer injection could bypass the
 router's host-local firewall. Only IPv6 is tested on these segments. IPv4 cloud
 underlay reports are separate evidence and must not be attributed to AS218822.
+New runs use an IPv4-only ClusterIP service for the encrypted WireGuard transport
+so endpoint discovery survives router pod replacement or sidecar unavailability.
+This does not NAT the measured IPv6 packets. Startup retries are bounded and do
+not start the prober until endpoint configuration and a handshake succeed.
 
 `routing/spoofer` builds the upstream CAIDA 1.5.0 standalone client, without its
 scheduler or GUI. Jobs opt into public anonymized results, keep TLS verification
