@@ -27,7 +27,7 @@ AS218822 Network Infrastructure Specs.
 ### Self-announced range `2a06:9801:ff0::/44`
 - [x] BGP upstream tunneling: bgptunnel.com, hyehost
 - [x] BGP daemon hosting: Oracle Cloud
-- [ ] Tailscale Exit Node
+- [x] Tailscale Exit Node
 
 ### Infrastructure As Code
 - [x] RIPE Database GitOps
