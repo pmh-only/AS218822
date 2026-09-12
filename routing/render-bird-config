@@ -72,6 +72,7 @@ configure_gre() {
     local_address=
     remote_address=
     tunnel_addresses=
+    mac_address=
     ttl=255
     mtu=
 
@@ -88,6 +89,7 @@ configure_gre() {
             local) local_address=$value ;;
             remote) remote_address=$value ;;
             address) tunnel_addresses="$tunnel_addresses $value" ;;
+            mac) mac_address=$value ;;
             ttl) ttl=$value ;;
             mtu) mtu=$value ;;
             *)
@@ -109,6 +111,10 @@ configure_gre() {
         echo "GRE local, remote, and address are required in $config" >&2
         exit 1
     fi
+    if [ -n "$mac_address" ] && [ "$type" != gretap ]; then
+        echo "GRE MAC address is only supported for gretap in $config" >&2
+        exit 1
+    fi
 
     [ "${BIRD_VALIDATE:-0}" = 1 ] && return
 
@@ -127,6 +133,9 @@ configure_gre() {
     ip link add "$interface" type "$type" \
         local "$local_address" remote "$remote_address" "$ttl_option" "$ttl"
     gre_interfaces="$interface $gre_interfaces"
+    if [ -n "$mac_address" ]; then
+        ip link set dev "$interface" address "$mac_address"
+    fi
     if [ -n "$mtu" ]; then
         ip link set dev "$interface" mtu "$mtu"
     fi
