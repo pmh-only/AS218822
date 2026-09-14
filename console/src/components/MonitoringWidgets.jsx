@@ -121,9 +121,9 @@ export function Chart({ data, metric, title, description, group = (labels) => la
   </Panel>;
 }
 
-export function StateHistory({ data, metric, loading = false, label = (labels) => `${labels.location} / ${labels.protocol ?? labels.target}` }) {
+export function StateHistory({ data, metric, loading = false, include = () => true, label = (labels) => `${labels.location} / ${labels.protocol ?? labels.target}` }) {
   const [expanded, setExpanded] = useState(false);
-  const series = samples(data, metric);
+  const series = samples(data, metric).filter((sample) => include(sample.labels));
   if (!series.length) return <Empty loading={loading} error={data?.metrics[metric]?.state === "error"} />;
   const start = new Date(data.start).getTime();
   const end = new Date(data.end).getTime();
