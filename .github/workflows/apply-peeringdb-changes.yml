@@ -9,7 +9,7 @@ on:
       - "peeringdb/**/*.yml"
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: peeringdb
@@ -93,12 +93,27 @@ jobs:
 
           updates = []
           for resource_path in sorted(changed_paths):
-              if resource_path.startswith("peeringdb/netixlan/"):
+              if resource_path.startswith("peeringdb/netixlan-new/"):
+                  resource_name = Path(resource_path).stem
+                  if not resource_name or any(character not in "abcdefghijklmnopqrstuvwxyz0123456789-" for character in resource_name):
+                      raise ValueError(f"Invalid new PeeringDB connection path: {resource_path}")
+                  config = {
+                      "endpoint": "netixlan",
+                      "method": "POST",
+                      "identifiers": {"net_id": 43433, "asn": 218822},
+                      "writable_fields": {
+                          "ixlan_id", "notes", "speed", "ipaddr4", "ipaddr6",
+                          "is_rs_peer", "bfd_support", "operational",
+                      },
+                      "payload_identifiers": {"net_id", "asn"},
+                  }
+              elif resource_path.startswith("peeringdb/netixlan/"):
                   resource_id = Path(resource_path).stem
                   if not resource_id.isdecimal():
                       raise ValueError(f"Invalid PeeringDB connection path: {resource_path}")
                   config = {
                       "endpoint": f"netixlan/{resource_id}",
+                      "method": "PUT",
                       "identifiers": {
                           "id": int(resource_id), "net_id": 43433, "asn": 218822,
                       },
@@ -111,6 +126,7 @@ jobs:
                   }
               elif resource_path in resources:
                   config = resources[resource_path]
+                  config["method"] = "PUT"
               else:
                   raise ValueError(f"Unknown PeeringDB resource: {resource_path}")
 
@@ -139,7 +155,7 @@ jobs:
               payload_path = Path("/tmp") / f"peeringdb-{Path(resource_path).stem}.json"
               payload_fields = writable_fields | config["payload_identifiers"]
               payload = {field: resource[field] for field in payload_fields}
-              if config["endpoint"].startswith("netixlan/"):
+              if config["endpoint"].startswith("netixlan"):
                   payload["ipaddr4"] = payload["ipaddr4"] or ""
                   payload["ipaddr6"] = payload["ipaddr6"] or ""
               with payload_path.open("w", encoding="utf-8") as output_file:
@@ -148,13 +164,15 @@ jobs:
                       output_file,
                       ensure_ascii=False,
                   )
-              updates.append(f"PUT\t{config['endpoint']}\t{payload_path}")
+              updates.append(f"{config['method']}\t{config['endpoint']}\t{payload_path}\t{resource_path}")
 
           for resource_path in sorted(deleted_paths):
               path = Path(resource_path)
+              if path.parent == Path("peeringdb/netixlan-new"):
+                  continue
               if path.parent != Path("peeringdb/netixlan") or not path.stem.isdecimal():
                   raise ValueError(f"PeeringDB resource cannot be deleted: {resource_path}")
-              updates.append(f"DELETE\tnetixlan/{path.stem}\t-")
+              updates.append(f"DELETE\tnetixlan/{path.stem}\t-\t{resource_path}")
 
           with open("/tmp/peeringdb-updates", "w", encoding="utf-8") as updates_file:
               updates_file.write("\n".join(updates))
@@ -171,7 +189,8 @@ jobs:
             exit 1
           }
 
-          while IFS=$'\t' read -r method endpoint payload_path; do
+          : > /tmp/peeringdb-created
+          while IFS=$'\t' read -r method endpoint payload_path resource_path; do
             curl_args=(
               --request "$method"
               --fail-with-body
@@ -180,11 +199,73 @@ jobs:
               --header "Authorization: Api-Key $PEERINGDB_API_KEY"
               --header "Accept: application/json"
             )
-            if [ "$method" = PUT ]; then
+            if [ "$method" = PUT ] || [ "$method" = POST ]; then
               curl_args+=(
                 --header "Content-Type: application/json"
                 --data-binary "@$payload_path"
               )
             fi
-            curl "${curl_args[@]}" "https://www.peeringdb.com/api/$endpoint" >/dev/null
+            if [ "$method" = POST ]; then
+              ipaddr4=$(jq -r '.ipaddr4' "$payload_path")
+              ipaddr6=$(jq -r '.ipaddr6' "$payload_path")
+              existing=$(curl --fail-with-body --silent --show-error \
+                --header "Authorization: Api-Key $PEERINGDB_API_KEY" \
+                --header "Accept: application/json" \
+                "https://www.peeringdb.com/api/netixlan?net_id=43433&ixlan_id=$(jq -r '.ixlan_id' "$payload_path")&depth=0")
+              matches=$(jq -c --arg ipaddr4 "$ipaddr4" --arg ipaddr6 "$ipaddr6" \
+                '[.data[] | select((.ipaddr4 // "") == $ipaddr4 and (.ipaddr6 // "") == $ipaddr6)]' <<< "$existing")
+              count=$(jq -r 'length' <<< "$matches")
+              if [ "$count" -gt 1 ]; then
+                echo "Multiple PeeringDB connections match $resource_path" >&2
+                exit 1
+              elif [ "$count" -eq 1 ]; then
+                response=$(jq -c '{data: .}' <<< "$matches")
+              else
+                response=$(curl "${curl_args[@]}" "https://www.peeringdb.com/api/$endpoint")
+              fi
+              created_id=$(jq -er '.data[0].id' <<< "$response")
+              created_path="/tmp/peeringdb-created-$created_id.json"
+              printf '%s\n' "$response" > "$created_path"
+              printf '%s\t%s\t%s\n' "$created_id" "$resource_path" "$created_path" >> /tmp/peeringdb-created
+            else
+              curl "${curl_args[@]}" "https://www.peeringdb.com/api/$endpoint" >/dev/null
+            fi
           done < /tmp/peeringdb-updates
+
+          if [ -s /tmp/peeringdb-created ]; then
+            python - <<'PY'
+          import json
+          from pathlib import Path
+
+          import yaml
+
+          fields = (
+              "id", "net_id", "ixlan_id", "notes", "speed", "asn", "ipaddr4",
+              "ipaddr6", "is_rs_peer", "bfd_support", "operational",
+              "net_side_id", "ix_side_id",
+          )
+          for line in Path("/tmp/peeringdb-created").read_text(encoding="utf-8").splitlines():
+              resource_id, source_path, response_path = line.split("\t")
+              records = json.loads(Path(response_path).read_text(encoding="utf-8")).get("data", [])
+              if len(records) != 1 or records[0].get("id") != int(resource_id):
+                  raise ValueError(f"Invalid PeeringDB create response for {source_path}")
+              record = records[0]
+              missing = set(fields) - record.keys()
+              if missing:
+                  raise ValueError(f"PeeringDB response is missing fields: {sorted(missing)}")
+              destination = Path("peeringdb/netixlan") / f"{resource_id}.yml"
+              destination.parent.mkdir(parents=True, exist_ok=True)
+              destination.write_text(yaml.safe_dump(
+                  {field: record[field] for field in fields},
+                  sort_keys=False,
+                  allow_unicode=True,
+              ), encoding="utf-8")
+              Path(source_path).unlink()
+          PY
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add peeringdb/netixlan peeringdb/netixlan-new
+            git commit -m "Track created PeeringDB connections"
+            git pull --rebase
+            git push
+          fi
