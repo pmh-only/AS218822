@@ -1,12 +1,13 @@
 define local6 = { 2a06:9801:ff0::/44, fd00:218:822:100::1, fd00:218:822:2014:23:: }
-define upstreams = { "hkix-gretap", "lagrange", "tun10006" }
+define upstreams = { "4ixp", "hkix-gretap", "lagrange", "tun10006" }
 
 add table inet as218822_sav
 delete table inet as218822_sav
 table inet as218822_sav {
     set transport6 {
         type ipv6_addr
-        elements = { 2602:f92a:1315:2::b5, fd:e82c::2, 2a01:20e:1000:111::2 }
+        elements = { 2001:7f8:d0::3:56c6:1, 2602:f92a:1315:2::b5,
+            fd:e82c::2, 2a01:20e:1000:111::2 }
     }
     set transport4 {
         type ipv4_addr
