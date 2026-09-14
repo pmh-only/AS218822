@@ -6,6 +6,9 @@ on:
       - ".github/workflows/build-container.yml"
       - "atlas/**"
       - "console/**"
+      - "website/**"
+      - "package.json"
+      - "pnpm-workspace.yaml"
       - "pnpm-lock.yaml"
       - "routing/Dockerfile"
       - "routing/render-bird-config"
@@ -22,6 +25,9 @@ on:
       - ".github/workflows/build-container.yml"
       - "atlas/**"
       - "console/**"
+      - "website/**"
+      - "package.json"
+      - "pnpm-workspace.yaml"
       - "pnpm-lock.yaml"
       - "routing/Dockerfile"
       - "routing/render-bird-config"
@@ -70,14 +76,18 @@ jobs:
             component=$1
             image=$2
             context=$3
-            build=$(jq -c --arg component "$component" --arg image "$image" --arg context "$context" '. + [
-              {component: $component, image: $image, context: $context, architecture: "amd64", platform: "linux/amd64", runner: "ubuntu-24.04"},
-              {component: $component, image: $image, context: $context, architecture: "arm64", platform: "linux/arm64", runner: "ubuntu-24.04-arm"}
+            dockerfile=${4:-$context/Dockerfile}
+            build=$(jq -c --arg component "$component" --arg image "$image" --arg context "$context" --arg dockerfile "$dockerfile" '. + [
+              {component: $component, image: $image, context: $context, dockerfile: $dockerfile, architecture: "amd64", platform: "linux/amd64", runner: "ubuntu-24.04"},
+              {component: $component, image: $image, context: $context, dockerfile: $dockerfile, architecture: "arm64", platform: "linux/arm64", runner: "ubuntu-24.04-arm"}
             ]' <<< "$build")
             merge=$(jq -c --arg component "$component" --arg image "$image" '. + [{component: $component, image: $image}]' <<< "$merge")
           }
           if changed atlas; then add_component ripe-atlas as218822-ripe-atlas atlas; fi
           if changed console pnpm-lock.yaml; then add_component console as218822-console console; fi
+          if changed website package.json pnpm-workspace.yaml pnpm-lock.yaml; then
+            add_component website as218822-website . website/Dockerfile
+          fi
           if changed routing/Dockerfile routing/render-bird-config routing/policy.conf routing/source-validation.nft routing/bird routing/tunnels; then
             add_component bird as218822 routing
           fi
@@ -117,6 +127,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
           platforms: ${{ matrix.platform }}
           load: true
           tags: ${{ matrix.image }}:${{ matrix.architecture }}
@@ -129,6 +140,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
           platforms: ${{ matrix.platform }}
           outputs: type=image,name=${{ env.REGISTRY }}/pmh-only/${{ matrix.image }},push-by-digest=true,name-canonical=true,push=true
           cache-from: type=gha,scope=${{ matrix.component }}-${{ matrix.architecture }}

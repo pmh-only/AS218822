@@ -37,7 +37,9 @@ export default function LookingGlass({ apiUrl }) {
     const timer = setTimeout(() => controller.abort(), 50_000);
 
     try {
-      const response = await fetch(`${apiUrl.replace(/\/$/, "")}/api/query`, {
+      const hostname = globalThis.location?.hostname.replace(/^\[|\]$/g, "");
+      const endpoint = hostname === "2a06:9801:ff0::" ? "" : apiUrl.replace(/\/$/, "");
+      const response = await fetch(`${endpoint}/api/query`, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ type, target: target.trim() }),
