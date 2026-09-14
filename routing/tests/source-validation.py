@@ -134,7 +134,7 @@ for interface in ("client", "lunalight", "tailscale0", "core"):
         run("ip", "link", "set", side, "up")
     run("ip", "-6", "address", "add", "fd00:ffff::1/128", "dev", interface, "nodad")
 
-for interface in ("4ixp", "bgptunnel-es", "zt-test", "hkix-gretap", "enp1s0", "uplink"):
+for interface in ("4ixp", "bgptunnel-es", "zt-test", "hkix-gretap", "p7ix-342", "enp1s0", "uplink"):
     if interface != "uplink":
         run("ip", "link", "add", interface, "type", "veth", "peer", "name", "p-" + interface)
         run("ip", "link", "set", "p-" + interface, "addrgenmode", "none")
@@ -201,8 +201,11 @@ with socket.socket(socket.AF_INET6, socket.SOCK_DGRAM) as sender:
 
 load("/routing/edge/gre-gateway/bird/source-validation.nft")
 check_external_ingress("hkix-gretap")
+check_external_ingress("p7ix-342")
 run("ip", "-6", "route", "replace", "2606:4700::1111/128", "dev", "4ixp")
 expect("4IXP local peering source", lambda: local("2001:7f8:d0::3:56c6:1", "2606:4700::1111"), "egress_valid")
+run("ip", "-6", "route", "replace", "2606:4700::1111/128", "dev", "p7ix-342")
+expect("P7IX local peering source", lambda: local("2602:f92a:1315:3::28", "2606:4700::1111"), "egress_valid")
 expect("GRE accepts local infrastructure from authenticated backbone",
        lambda: inject("core", "2a06:9801:ff0:200::1", "2a06:9801:ff0::"),
        "delivered", "test_observer")
