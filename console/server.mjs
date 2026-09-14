@@ -44,6 +44,8 @@ async function serveFile(request, response) {
   let filename = resolve(publicDir, relative);
   if (!filename.startsWith(`${resolve(publicDir)}${sep}`)) return respond(response, 404, "Not found\n", { "content-type": "text/plain; charset=utf-8" });
   try {
+    const entry = await stat(filename);
+    if (entry.isDirectory()) filename = resolve(filename, "index.html");
     if (!(await stat(filename)).isFile()) throw new Error("Not a file");
   } catch {
     if (extname(filename)) return respond(response, 404, "Not found\n", { "content-type": "text/plain; charset=utf-8" });

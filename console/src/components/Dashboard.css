@@ -21,6 +21,7 @@
 .dashboard-toolbar nav { display: flex; gap: 1.25rem; overflow-x: auto; min-width: 0; }
 .dashboard-toolbar nav a { flex: 0 0 auto; padding-block: 0.5rem; color: var(--cds-text-secondary); font-size: 0.875rem; text-decoration: none; }
 .dashboard-toolbar nav a:hover { color: var(--cds-link-primary); text-decoration: underline; text-underline-offset: 0.4rem; }
+.dashboard-toolbar nav a[aria-current="page"] { color: var(--cds-text-primary); box-shadow: inset 0 -2px var(--cds-link-primary); }
 .telemetry-controls { display: flex; align-items: center; gap: 1rem; min-width: 0; }
 .telemetry-controls .cds--form-item { flex: initial; }
 .telemetry-controls .cds--select { min-width: 9rem; }
@@ -31,6 +32,9 @@
 .monitoring-metric dd { margin-block: 1rem 0.75rem; font-size: 2rem; font-weight: 300; line-height: 1.2; overflow-wrap: anywhere; }
 .monitoring-metric p { font-size: 0.75rem; }
 .dashboard-section { margin-top: 3.5rem; }
+.dashboard-section--page { margin-top: 0; }
+.page-context { display: flex; justify-content: flex-end; margin-bottom: 1rem; }
+.page-context .cds--tag { margin: 0; }
 .section-heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.25rem; }
 .section-heading p, .section-description { margin-top: 0.5rem; font-size: 0.875rem; max-width: 75ch; }
 .monitoring-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 1rem; }
@@ -93,7 +97,7 @@
 .operator-access p { margin-top: 0.5rem; max-width: 70ch; font-size: 0.875rem; }
 .operator-access .cds--btn { flex-shrink: 0; }
 .operator-metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 1rem; }
-#operator > .cds--inline-notification { margin-block: 1rem; max-width: none; }
+.dashboard-section--page > .cds--inline-notification { margin-block: 1rem; max-width: none; }
 .subsection-heading { margin-top: 1.5rem; }
 .node-conditions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.5rem; }
 .node-conditions .cds--tag { margin: 0; }

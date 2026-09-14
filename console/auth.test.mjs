@@ -76,7 +76,7 @@ test("real OIDC code flow checks PKCE, state, nonce, signature, issuer, expiry, 
   let transaction = await login();
   const state = authorization.searchParams.get("state");
   let response = await route(`/auth/callback?code=${state}&state=${state}`, transaction);
-  assert.equal(response.headers.location, "/#operator");
+  assert.equal(response.headers.location, "/operator");
   const sessionCookie = response.headers["set-cookie"][1].split(";")[0];
   assert.doesNotMatch(sessionCookie, /Network Operator|never-send-this/);
   const user = await auth.session({ headers: { cookie: sessionCookie } });

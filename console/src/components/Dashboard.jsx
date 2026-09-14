@@ -6,9 +6,18 @@ import OperatorMonitoring from "./OperatorMonitoring.jsx";
 import { Chart, Empty, Metric, Panel, State, StateHistory, TelemetryTable, duration, number, percent, rate, reading, samples, time, total } from "./MonitoringWidgets.jsx";
 import "./Dashboard.css";
 
-const navigation = [["overview", "Overview"], ["routing", "Routing"], ["traffic", "Traffic"], ["validation", "RPKI & probes"], ["workloads", "Workloads"], ["operator", "Operator"], ["sources", "Data sources"]];
+const navigation = [["overview", "/", "Overview"], ["routing", "/routing", "Routing"], ["traffic", "/traffic", "Traffic"], ["validation", "/validation", "RPKI & probes"], ["workloads", "/workloads", "Workloads"], ["operator", "/operator", "Operator"], ["sources", "/sources", "Data sources"]];
+const pages = {
+  overview: ["Network operations", "Live routing, reachability, and infrastructure telemetry for AS218822."],
+  routing: ["Routing health", "Current protocol state and sampled stability across every reporting location."],
+  traffic: ["Traffic & transport", "Tailscale overlay measurements only, not total BGP transit. Rates use a five-minute average."],
+  validation: ["Reachability & route validation", "External IPv6 checks and the RPKI cache used by the routing daemons."],
+  workloads: ["Workloads & alerts", "Readiness and AS218822 alert rules. Resource diagnostics are available in the operator view."],
+  operator: ["Operator diagnostics", "Private infrastructure telemetry, protected by OIDC. All operations remain read-only."],
+  sources: ["Data sources & coverage", "Know what is measured before drawing conclusions."],
+};
 
-export default function Dashboard() {
+export default function Dashboard({ page = "overview" }) {
   const [data, setData] = useState(null);
   const [operator, setOperator] = useState(null);
   const [auth, setAuth] = useState(null);
@@ -60,7 +69,7 @@ export default function Dashboard() {
       const privateRequest = get("/api/auth").then(async (session) => {
         if (disposed) return;
         setAuth(session);
-        if (!session.user) { setOperator(null); setOperatorError(""); return; }
+        if (!session.user || page !== "operator") { setOperator(null); setOperatorError(""); return; }
         try {
           const body = await get(`/api/operator?range=${range}`);
           if (!disposed) { setOperator(body); setOperatorError(""); }
@@ -82,7 +91,7 @@ export default function Dashboard() {
     document.addEventListener("visibilitychange", onVisible);
     window.addEventListener("pageshow", onPageShow);
     return () => { disposed = true; controller?.abort(); if (timer) window.clearInterval(timer); document.removeEventListener("visibilitychange", onVisible); window.removeEventListener("pageshow", onPageShow); };
-  }, [range, refresh, autoRefresh]);
+  }, [range, refresh, autoRefresh, page]);
 
   async function logout() {
     setSigningOut(true);
@@ -90,7 +99,7 @@ export default function Dashboard() {
     try {
       const response = await fetch("/auth/logout", { method: "POST", headers: { "x-csrf-token": auth.user.csrfToken }, signal: AbortSignal.timeout(10000) });
       if (!response.ok) throw new Error("Sign-out failed. Refresh your session and try again.");
-      window.location.replace("/#operator");
+      window.location.replace("/operator");
     } catch (reason) { setOperatorError(reason.message); setSigningOut(false); }
   }
 
@@ -120,45 +129,46 @@ export default function Dashboard() {
   const failures = Object.entries(current?.metrics ?? {}).filter(([, metric]) => metric.state === "error");
   const privateFailures = Object.entries(privateData?.metrics ?? {}).filter(([, metric]) => metric.state === "error");
   const coverage = (snapshot, access) => Object.entries(snapshot?.metrics ?? {}).map(([id, metric]) => ({ id: `${access}-${id}`, name: metric.label, access, state: metric.state === "ok" ? "Reporting" : metric.state === "error" ? "Unavailable" : "No series", series: metric.series.length }));
+  const [title, description] = pages[page] ?? pages.overview;
 
   return <Theme theme="g100">
-    <Header aria-label="AS218822 network console"><SkipToContent /><HeaderName href="#overview" prefix="AS218822">Network console</HeaderName><div className="header-access"><Tag type={sessionValid ? "purple" : "gray"} size="sm">{sessionValid ? "Operator access" : "Public / read-only"}</Tag></div></Header>
+    <Header aria-label="AS218822 network console"><SkipToContent /><HeaderName href="/" prefix="AS218822">Network console</HeaderName><div className="header-access"><Tag type={sessionValid ? "purple" : "gray"} size="sm">{sessionValid ? "Operator access" : "Public / read-only"}</Tag></div></Header>
     <Content id="main-content" className="dashboard">
-      <section id="overview" className="dashboard-intro"><div><h1>Network operations</h1><p>Live routing, reachability, and infrastructure telemetry for AS218822.</p></div><div className="snapshot-status" aria-live="polite"><Tag type={stale ? "red" : current ? "gray" : "gray"}>{stale ? "Stale snapshot" : current ? `Updated ${time(current.generatedAt)}` : loading ? "Connecting" : "Telemetry unavailable"}</Tag><span>{current ? `${duration(age)} ago` : "Waiting for monitoring data"}</span></div></section>
-      <div className="dashboard-toolbar"><nav aria-label="Console sections">{navigation.map(([id, name]) => <a href={`#${id}`} key={id}>{name}</a>)}</nav><div className="telemetry-controls"><Select id="time-window" labelText="History window" hideLabel value={range} onChange={(event) => setRange(event.target.value)} size="sm"><SelectItem value="1h" text="Last 1 hour" /><SelectItem value="6h" text="Last 6 hours" /><SelectItem value="24h" text="Last 24 hours" /></Select><Toggle id="auto-refresh" size="sm" labelText="Automatic refresh" hideLabel toggled={autoRefresh} labelA="Paused" labelB="Every 30s" onToggle={setAutoRefresh} /><Button size="sm" kind="secondary" renderIcon={Renew} disabled={loading} onClick={() => setRefresh((value) => value + 1)}>{loading ? "Refreshing" : "Refresh"}</Button></div></div>
+      <section className="dashboard-intro"><div><h1>{title}</h1><p>{description}</p></div><div className="snapshot-status" aria-live="polite"><Tag type={stale ? "red" : current ? "gray" : "gray"}>{stale ? "Stale snapshot" : current ? `Updated ${time(current.generatedAt)}` : loading ? "Connecting" : "Telemetry unavailable"}</Tag><span>{current ? `${duration(age)} ago` : "Waiting for monitoring data"}</span></div></section>
+      <div className="dashboard-toolbar"><nav aria-label="Console pages">{navigation.map(([id, href, name]) => <a href={href} key={id} aria-current={page === id ? "page" : undefined}>{name}</a>)}</nav><div className="telemetry-controls"><Select id="time-window" labelText="History window" hideLabel value={range} onChange={(event) => setRange(event.target.value)} size="sm"><SelectItem value="1h" text="Last 1 hour" /><SelectItem value="6h" text="Last 6 hours" /><SelectItem value="24h" text="Last 24 hours" /></Select><Toggle id="auto-refresh" size="sm" labelText="Automatic refresh" hideLabel toggled={autoRefresh} labelA="Paused" labelB="Every 30s" onToggle={setAutoRefresh} /><Button size="sm" kind="secondary" renderIcon={Renew} disabled={loading} onClick={() => setRefresh((value) => value + 1)}>{loading ? "Refreshing" : "Refresh"}</Button></div></div>
 
       {error && <InlineNotification kind="error" lowContrast hideCloseButton title="Telemetry unavailable" subtitle={`${error} ${current ? "Showing the last successful snapshot, not live state." : "Use Refresh to try again."}`} />}
       {!error && stale && <InlineNotification kind="warning" lowContrast hideCloseButton title="This snapshot is out of date" subtitle="Refresh to see current state. Historical values below are retained for reference." />}
       {collectorIssue && <InlineNotification kind="warning" lowContrast hideCloseButton title="Monitoring coverage is degraded" subtitle="A collector is down or its samples are old. Missing resources must not be interpreted as healthy. See Data sources for details." />}
       {failures.length > 0 && <InlineNotification kind="warning" lowContrast hideCloseButton title={`${failures.length} telemetry sources unavailable`} subtitle={failures.map(([, metric]) => metric.label).join(", ")} />}
 
-      <div className="metrics-grid">
+      {page === "overview" && <div className="metrics-grid">
         <Metric label="BGP established" value={ratio(summary?.bgpUp, summary?.bgpTotal)} detail={`${ratio(summary?.routersUp, summary?.routersTotal)} routing daemons up`} />
         <Metric label="Overlay throughput" value={rate(total(current, "traffic"))} detail={`In ${rate(total(current, "traffic", { direction: "in" }))} / Out ${rate(total(current, "traffic", { direction: "out" }))}`} />
         <Metric label="IPv6 probes" value={probes.length ? `${probes.filter((probe) => probe.reachable).length} / ${probes.length}` : "N/A"} detail="External targets reachable" />
         <Metric label="Ready containers" value={ratio(summary?.containersReady, summary?.containersTotal)} detail={current?.containers.length ? `${new Set(current.containers.map((row) => row.pod)).size} observed pods` : "Pod count unavailable"} />
         <Metric label="Firing alerts" value={number(summary?.activeAlerts)} detail={summary?.activeAlerts != null ? `${current.alerts.filter((alert) => alert.state === "pending").length} pending alert rules` : "Alert state unavailable"} />
         <Metric label="Validated prefixes" value={summary?.vrps == null ? "N/A" : new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 2 }).format(summary.vrps)} detail="RPKI validated ROA payloads" />
-      </div>
+      </div>}
 
-      <section id="routing" className="dashboard-section"><div className="section-heading"><div><h2>Routing health</h2><p>Current protocol state and sampled stability across every reporting location.</p></div><Tag type="gray">{range} window</Tag></div>
+      {page === "routing" && <section aria-label="Routing health" className="dashboard-section dashboard-section--page"><div className="page-context"><Tag type="gray">{range} window</Tag></div>
         <div className="monitoring-grid">
           <div className="span-7" id="topology"><Panel title="Live BGP topology" description="Logical relationships derived from session telemetry, not physical geography.">{current ? <NetworkTopology protocols={protocols} stale={stale || collectorIssue} /> : <Empty loading={loading} error={Boolean(error)} />}</Panel></div>
           <div className="span-5"><Chart data={current} metric="sessionHistory" title="BGP availability" description="Established versus observed sessions. A missing exporter can reduce both counts." chartData={bgpChart} loading={loading && !current} /><div className="router-summary">{samples(current, "routers").map((row) => <div key={row.labels.location}><span>{row.labels.location}</span><State value={row.value == null ? null : row.value === 1} up="BIRD online" down="BIRD down" stale={stale} /></div>)}</div></div>
           <div className="span-12"><Panel title="Session history" description="Each cell is a sampled state, not a continuous uptime guarantee. Gaps remain unfilled."><StateHistory data={current} metric="sessionHistory" loading={loading && !current} /></Panel></div>
           <div className="span-12" id="sessions"><Panel title="Routing protocols" description="BGP, RPKI, and supporting protocols. Availability and changes use 30-second logical session samples across pod replacements; transitions are not outage counts."><TelemetryTable title="Routing protocols" searchable pageSize={25} rows={sessionRows} empty={loading ? "Loading protocol state..." : "No protocols reported. Check collector health below."} columns={[["name", "Protocol"], ["location", "Location"], ["type", "Type"], ["up", "State", (value, row) => <State value={value} up={row.type === "BGP" ? "Established" : "Up"} stale={stale || (row.observed && clock - new Date(row.observed).getTime() > 180000)} />], ["availability", `Availability / ${range}`, percent], ["changes", "State changes", number], ["observed", "Last sample", time]]} /></Panel></div>
         </div>
-      </section>
+      </section>}
 
-      <section id="traffic" className="dashboard-section"><div className="section-heading"><div><h2>Traffic & transport</h2><p>Tailscale overlay measurements only, not total BGP transit. Rates use a five-minute average.</p></div></div><div className="monitoring-grid">
+      {page === "traffic" && <section aria-label="Traffic and transport" className="dashboard-section dashboard-section--page"><div className="monitoring-grid">
         <div className="span-6"><Chart data={current} metric="trafficHistory" title="Overlay throughput" description="Inbound and outbound bit rates." format={rate} loading={loading && !current} /></div>
         <div className="span-6"><Chart data={current} metric="packetHistory" title="Packet rate" description="Packets received and sent per second." format={(value) => `${number(value, 1)} pps`} loading={loading && !current} /></div>
         <div className="span-6"><Chart data={current} metric="trafficPaths" kind="stacked" chartData={paths} title="Transport paths" description="Direct and relayed overlay traffic by address family." format={rate} loading={loading && !current} /></div>
         <div className="span-6"><Chart data={current} metric="traffic" kind="stacked" chartData={workloadTraffic} title="Throughput by workload" description="These are observed overlay endpoints; their traffic is not necessarily unique." format={rate} loading={loading && !current} /></div>
         <div className="span-12"><Panel title="Dropped overlay packets" description="Outbound drops by reason. This is a drop rate, not end-to-end packet loss."><TelemetryTable title="Dropped overlay packets" rows={samples(current, "drops").map((row) => ({ id: row.labels.reason, reason: row.labels.reason, rate: row.value }))} columns={[["reason", "Drop reason"], ["rate", "Packets / second", (value) => number(value, 4)]]} /></Panel></div>
-      </div></section>
+      </div></section>}
 
-      <section id="validation" className="dashboard-section"><div className="section-heading"><div><h2>Reachability & route validation</h2><p>External IPv6 checks and the RPKI cache used by the routing daemons.</p></div></div><div className="monitoring-grid">
+      {page === "validation" && <section aria-label="Reachability and route validation" className="dashboard-section dashboard-section--page"><div className="monitoring-grid">
         <div className="span-12"><Panel title="IPv6 probe history" description="Reachability checks only. The current exporter does not report round-trip latency."><StateHistory data={current} metric="probeHistory" loading={loading && !current} /><div className="probe-current">{probes.map((probe) => <div key={`${probe.location}-${probe.target}`}><span>{probe.target}<small>{probe.location}</small></span><State value={probe.reachable} up="Reachable" down="Unreachable" stale={stale} /></div>)}</div></Panel></div>
         <div className="span-6"><Chart data={current} metric="vrpHistory" title="Validated prefix history" description="VRPs in the Routinator validation cache." group={() => "VRPs"} loading={loading && !current} /></div>
         <div className="span-6"><Chart data={current} metric="trustAnchors" title="Trust anchor contributions" description="Contributed VRPs by regional registry; duplicates between anchors can remain." group={(labels) => labels.name.toUpperCase()} kind="bar" loading={loading && !current} /></div>
@@ -168,14 +178,14 @@ export default function Dashboard() {
           <div><dt>Validation duration</dt><dd>{duration(rpki("last_update_duration"))}</dd></div>
           <div><dt>Cache serial</dt><dd>{number(rpki("serial"))}</dd></div><div><dt>Stale objects</dt><dd>{number(rpki("stale_objects"))}</dd></div><div><dt>RTR connections</dt><dd>{number(rpki("rtr_current_connections"))}</dd></div>
         </dl></Panel></div>
-      </div></section>
+      </div></section>}
 
-      <section id="workloads" className="dashboard-section"><div className="section-heading"><div><h2>Workloads & alerts</h2><p>Readiness and AS218822 alert rules. Resource diagnostics are available in the operator view.</p></div></div><div className="monitoring-grid">
+      {page === "workloads" && <section aria-label="Workloads and alerts" className="dashboard-section dashboard-section--page"><div className="monitoring-grid">
         <div className="span-7"><Panel title="Container readiness"><TelemetryTable title="Workloads" searchable rows={(current?.containers ?? []).map((row) => ({ id: `${row.pod}-${row.name}`, ...row }))} columns={[["name", "Container"], ["pod", "Pod"], ["ready", "Readiness", (value) => <State value={value} up="Ready" down="Not ready" stale={stale} />]]} /></Panel></div>
         <div className="span-5"><Panel title="Active & pending alerts" description="Pending rules have not yet reached their configured firing duration.">{!current ? <Empty loading={loading} error={Boolean(error)} /> : current.metrics.alerts.state === "error" ? <Empty error /> : current.alerts.length ? <div className="alert-list">{current.alerts.map((alert, index) => <InlineNotification key={`${alert.name}-${alert.location}-${alert.protocol}-${index}`} kind={alert.severity === "critical" ? "error" : "warning"} lowContrast hideCloseButton title={alert.name} subtitle={[alert.state, alert.severity, alert.location, alert.protocol].filter(Boolean).join(" / ")} />)}</div> : <InlineNotification kind={stale || collectorIssue ? "info" : "success"} lowContrast hideCloseButton title={stale || collectorIssue ? "No alerts in this snapshot" : "No active AS218822 alerts"} subtitle={stale || collectorIssue ? "Monitoring is stale or incomplete; this is not a health guarantee." : "No firing or pending rules reported."} />}</Panel></div>
-      </div></section>
+      </div></section>}
 
-      <section id="operator" className="dashboard-section"><div className="section-heading"><div><h2>Operator diagnostics</h2><p>Private infrastructure telemetry, protected by OIDC. All operations remain read-only.</p></div><Tag type={sessionValid ? "purple" : "gray"}>{sessionValid ? "Authenticated" : "Sign-in required"}</Tag></div>
+      {page === "operator" && <section aria-label="Operator diagnostics" className="dashboard-section dashboard-section--page"><div className="page-context"><Tag type={sessionValid ? "purple" : "gray"}>{sessionValid ? "Authenticated" : "Sign-in required"}</Tag></div>
         {authError && <InlineNotification kind="error" lowContrast hideCloseButton title="Operator sign-in" subtitle={authError} />}
         {operatorError && <InlineNotification kind="error" lowContrast hideCloseButton title="Operator telemetry unavailable" subtitle={operatorError} />}
         {sessionValid ? <div className="operator-access"><div><strong>{auth.user.name}</strong><p>Session expires {time(auth.user.expiresAt)}. Private readings are not included in the public API.</p></div><Button size="sm" kind="tertiary" renderIcon={Logout} disabled={signingOut} onClick={logout}>{signingOut ? "Signing out" : "Sign out"}</Button></div> : <div className="operator-access"><div><h3>{auth?.enabled ? "Sign in to inspect infrastructure" : auth ? "Operator access is not configured" : "Checking operator access"}</h3><p>{auth?.enabled ? "Unlock container CPU and memory, restarts, node health, interfaces, storage, private addresses, and scrape diagnostics." : auth ? "Configure OIDC on the server to enable private diagnostics. They are never exposed anonymously." : "Public telemetry remains available while the session is checked."}</p></div>{auth?.enabled && <Button href="/auth/login" renderIcon={Login}>Sign in with OIDC</Button>}</div>}
@@ -183,13 +193,13 @@ export default function Dashboard() {
         {privateStale && <InlineNotification kind="warning" lowContrast hideCloseButton title="Private snapshot is stale" subtitle="Refresh before interpreting these readings as current." />}
         {privateFailures.length > 0 && <InlineNotification kind="warning" lowContrast hideCloseButton title={`${privateFailures.length} private sources unavailable`} subtitle={privateFailures.map(([, metric]) => metric.label).join(", ")} />}
         {privateData ? <OperatorMonitoring data={privateData} publicData={current} stale={privateStale} /> : sessionValid && loading ? <Empty loading /> : null}
-      </section>
+      </section>}
 
-      <section id="sources" className="dashboard-section"><div className="section-heading"><div><h2>Data sources & coverage</h2><p>Know what is measured before drawing conclusions.</p></div></div><div className="monitoring-grid">
+      {page === "sources" && <section aria-label="Data sources and coverage" className="dashboard-section dashboard-section--page"><div className="monitoring-grid">
         <div className="span-7"><Panel title="Collector health" description="A successful API refresh does not guarantee every exporter is reporting."><TelemetryTable title="Collectors" rows={samples(current, "collectors").map((row) => ({ id: row.labels.job, name: row.labels.job, up: row.value == null ? null : row.value === 1, age: reading(current, "collectorAge", { job: row.labels.job }) }))} columns={[["name", "Collector"], ["up", "Scrape state", (value, row) => <State value={value} up="Reporting" down="Failed" stale={stale || row.age > 180} />], ["age", "Sample age", duration]]} /></Panel></div>
         <div className="span-5"><Panel title="Measurement boundaries"><ul className="coverage-notes"><li>Historical availability is based on observed samples, not an SLA.</li><li>Overlay throughput is not total network transit.</li><li>Latency, per-peer route counts, and routing-table contents are not collected by the current exporter.</li><li>Missing values are N/A, never a fabricated zero.</li><li>Only fixed, curated queries are accepted. No infrastructure controls, secrets, or arbitrary queries are exposed.</li></ul></Panel></div>
         <div className="span-12"><details className="coverage-details"><summary>Inspect telemetry coverage ({coverage(current, "Public").length + coverage(privateData, "Operator").length} sources)</summary><TelemetryTable title="Telemetry coverage" searchable rows={[...coverage(current, "Public"), ...coverage(privateData, "Operator")]} columns={[["name", "Signal"], ["access", "Access"], ["state", "Source state"], ["series", "Series", number]]} /></details></div>
-      </div></section>
+      </div></section>}
 
       <footer className="registry-footer"><div><strong>AS218822</strong><span>IPv6 autonomous system</span></div><div><span>Origin prefix</span><code>2a06:9801:ff0::/44</code></div><a href="https://as218822.net/peering/">Open peering policy</a><a href="https://www.peeringdb.com/net/43433">PeeringDB #43433</a><span>Times shown in your local timezone</span></footer>
     </Content>

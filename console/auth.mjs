@@ -96,18 +96,18 @@ export function createAuth(env = process.env, discover = oidc.discovery) {
         const memberships = claims?.[env.OIDC_GROUPS_CLAIM ?? "groups"];
         const allowed = claims && (subjects.includes(claims.sub) || (Array.isArray(memberships) && groups.some((group) => memberships.includes(group))) || env.OIDC_ALLOW_ANY_AUTHENTICATED === "true");
         if (!allowed) {
-          respond(response, 302, "", { location: "/?auth_error=access_denied#operator", "set-cookie": [cookie("transaction", "", 0), cookie("session", "", 0)] });
+          respond(response, 302, "", { location: "/operator?auth_error=access_denied", "set-cookie": [cookie("transaction", "", 0), cookie("session", "", 0)] });
           return true;
         }
         const age = Math.min(ttl, Math.floor(claims.exp - Date.now() / 1000));
         if (age <= 0) throw new Error("Expired identity token");
         const name = String(claims.name ?? claims.preferred_username ?? claims.sub).slice(0, 160);
         const value = await seal({ sub: claims.sub, name, csrf: token() }, "session", age);
-        respond(response, 302, "", { location: "/#operator", "set-cookie": [cookie("transaction", "", 0), cookie("session", value, age)] });
+        respond(response, 302, "", { location: "/operator", "set-cookie": [cookie("transaction", "", 0), cookie("session", value, age)] });
       }
     } catch {
       // Provider responses and tokens can contain credentials; do not log them.
-      respond(response, 302, "", { location: "/?auth_error=sign_in_failed#operator", "set-cookie": [cookie("transaction", "", 0), cookie("session", "", 0)] });
+      respond(response, 302, "", { location: "/operator?auth_error=sign_in_failed", "set-cookie": [cookie("transaction", "", 0), cookie("session", "", 0)] });
     }
     return true;
   }
