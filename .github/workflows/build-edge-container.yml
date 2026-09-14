@@ -34,35 +34,56 @@ env:
   REGISTRY: ghcr.io
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      build-matrix: ${{ steps.matrix.outputs.build-matrix }}
+      has-build: ${{ steps.matrix.outputs.has-build }}
+      merge-matrix: ${{ steps.matrix.outputs.merge-matrix }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Select affected edges
+        id: matrix
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          changed() {
+            ! git diff --quiet "$BASE_SHA" "$GITHUB_SHA" -- "$@"
+          }
+          build='[]'
+          merge='[]'
+          add_edge() {
+            edge=$1
+            image=$2
+            build=$(jq -c --arg edge "$edge" --arg image "$image" '. + [
+              {edge: $edge, image: $image, architecture: "amd64", platform: "linux/amd64", runner: "ubuntu-24.04"},
+              {edge: $edge, image: $image, architecture: "arm64", platform: "linux/arm64", runner: "ubuntu-24.04-arm"}
+            ]' <<< "$build")
+            merge=$(jq -c --arg edge "$edge" --arg image "$image" '. + [{edge: $edge, image: $image}]' <<< "$merge")
+          }
+          common_changed=false
+          if changed routing/Dockerfile routing/render-bird-config routing/policy.conf routing/source-validation.nft; then
+            common_changed=true
+          fi
+          if [ "$common_changed" = true ] || changed routing/edge/vultr; then add_edge vultr as218822-vultr-edge; fi
+          if [ "$common_changed" = true ] || changed routing/edge/gre-gateway; then add_edge gre-gateway as218822-gre-gateway; fi
+          echo "build-matrix={\"include\":$build}" >> "$GITHUB_OUTPUT"
+          echo "has-build=$(jq -r 'length > 0' <<< "$build")" >> "$GITHUB_OUTPUT"
+          echo "merge-matrix={\"include\":$merge}" >> "$GITHUB_OUTPUT"
+
   validate:
     uses: ./.github/workflows/validate-bird.yml
 
   build:
-    needs: validate
+    if: needs.changes.outputs.has-build == 'true'
+    needs: [changes, validate]
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          - edge: vultr
-            image: as218822-vultr-edge
-            architecture: amd64
-            platform: linux/amd64
-            runner: ubuntu-24.04
-          - edge: vultr
-            image: as218822-vultr-edge
-            architecture: arm64
-            platform: linux/arm64
-            runner: ubuntu-24.04-arm
-          - edge: gre-gateway
-            image: as218822-gre-gateway
-            architecture: amd64
-            platform: linux/amd64
-            runner: ubuntu-24.04
-          - edge: gre-gateway
-            image: as218822-gre-gateway
-            architecture: arm64
-            platform: linux/arm64
-            runner: ubuntu-24.04-arm
+      matrix: ${{ fromJSON(needs.changes.outputs.build-matrix) }}
     runs-on: ${{ matrix.runner }}
     steps:
       - name: Check out repository
@@ -121,15 +142,10 @@ jobs:
           retention-days: 1
 
   merge:
-    if: github.event_name != 'pull_request'
-    needs: build
+    if: github.event_name != 'pull_request' && needs.changes.outputs.has-build == 'true'
+    needs: [changes, build]
     strategy:
-      matrix:
-        include:
-          - edge: vultr
-            image: as218822-vultr-edge
-          - edge: gre-gateway
-            image: as218822-gre-gateway
+      matrix: ${{ fromJSON(needs.changes.outputs.merge-matrix) }}
     runs-on: ubuntu-24.04
     steps:
       - name: Download image digests

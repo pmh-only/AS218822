@@ -7,7 +7,14 @@ on:
       - "atlas/**"
       - "console/**"
       - "pnpm-lock.yaml"
-      - "routing/**"
+      - "routing/Dockerfile"
+      - "routing/render-bird-config"
+      - "routing/policy.conf"
+      - "routing/source-validation.nft"
+      - "routing/bird/**"
+      - "routing/tunnels/**"
+      - "routing/looking-glass/**"
+      - "routing/spoofer/**"
   push:
     branches:
       - main
@@ -16,7 +23,14 @@ on:
       - "atlas/**"
       - "console/**"
       - "pnpm-lock.yaml"
-      - "routing/**"
+      - "routing/Dockerfile"
+      - "routing/render-bird-config"
+      - "routing/policy.conf"
+      - "routing/source-validation.nft"
+      - "routing/bird/**"
+      - "routing/tunnels/**"
+      - "routing/looking-glass/**"
+      - "routing/spoofer/**"
 
 permissions:
   contents: read
@@ -30,75 +44,58 @@ env:
   REGISTRY: ghcr.io
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      build-matrix: ${{ steps.matrix.outputs.build-matrix }}
+      has-build: ${{ steps.matrix.outputs.has-build }}
+      merge-matrix: ${{ steps.matrix.outputs.merge-matrix }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Select affected components
+        id: matrix
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          changed() {
+            ! git diff --quiet "$BASE_SHA" "$GITHUB_SHA" -- "$@"
+          }
+          build='[]'
+          merge='[]'
+          add_component() {
+            component=$1
+            image=$2
+            context=$3
+            build=$(jq -c --arg component "$component" --arg image "$image" --arg context "$context" '. + [
+              {component: $component, image: $image, context: $context, architecture: "amd64", platform: "linux/amd64", runner: "ubuntu-24.04"},
+              {component: $component, image: $image, context: $context, architecture: "arm64", platform: "linux/arm64", runner: "ubuntu-24.04-arm"}
+            ]' <<< "$build")
+            merge=$(jq -c --arg component "$component" --arg image "$image" '. + [{component: $component, image: $image}]' <<< "$merge")
+          }
+          if changed atlas; then add_component ripe-atlas as218822-ripe-atlas atlas; fi
+          if changed console pnpm-lock.yaml; then add_component console as218822-console console; fi
+          if changed routing/Dockerfile routing/render-bird-config routing/policy.conf routing/source-validation.nft routing/bird routing/tunnels; then
+            add_component bird as218822 routing
+          fi
+          if changed routing/looking-glass; then add_component looking-glass as218822-looking-glass routing/looking-glass; fi
+          if changed routing/spoofer; then add_component spoofer as218822 routing/spoofer; fi
+          echo "build-matrix={\"include\":$build}" >> "$GITHUB_OUTPUT"
+          echo "has-build=$(jq -r 'length > 0' <<< "$build")" >> "$GITHUB_OUTPUT"
+          echo "merge-matrix={\"include\":$merge}" >> "$GITHUB_OUTPUT"
+
   validate:
     uses: ./.github/workflows/validate-bird.yml
 
   build:
-    needs: validate
+    if: needs.changes.outputs.has-build == 'true'
+    needs: [changes, validate]
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          - component: ripe-atlas
-            image: as218822-ripe-atlas
-            context: atlas
-            architecture: amd64
-            platform: linux/amd64
-            runner: ubuntu-24.04
-          - component: ripe-atlas
-            image: as218822-ripe-atlas
-            context: atlas
-            architecture: arm64
-            platform: linux/arm64
-            runner: ubuntu-24.04-arm
-          - component: bird
-            image: as218822
-            context: routing
-            architecture: amd64
-            platform: linux/amd64
-            runner: ubuntu-24.04
-          - component: bird
-            image: as218822
-            context: routing
-            architecture: arm64
-            platform: linux/arm64
-            runner: ubuntu-24.04-arm
-          - component: looking-glass
-            image: as218822-looking-glass
-            context: routing/looking-glass
-            architecture: amd64
-            platform: linux/amd64
-            runner: ubuntu-24.04
-          - component: looking-glass
-            image: as218822-looking-glass
-            context: routing/looking-glass
-            architecture: arm64
-            platform: linux/arm64
-            runner: ubuntu-24.04-arm
-          - component: console
-            image: as218822-console
-            context: console
-            architecture: amd64
-            platform: linux/amd64
-            runner: ubuntu-24.04
-          - component: console
-            image: as218822-console
-            context: console
-            architecture: arm64
-            platform: linux/arm64
-            runner: ubuntu-24.04-arm
-          - component: spoofer
-            image: as218822
-            context: routing/spoofer
-            architecture: amd64
-            platform: linux/amd64
-            runner: ubuntu-24.04
-          - component: spoofer
-            image: as218822
-            context: routing/spoofer
-            architecture: arm64
-            platform: linux/arm64
-            runner: ubuntu-24.04-arm
+      matrix: ${{ fromJSON(needs.changes.outputs.build-matrix) }}
     runs-on: ${{ matrix.runner }}
     steps:
       - name: Check out repository
@@ -171,21 +168,10 @@ jobs:
           retention-days: 1
 
   merge:
-    if: github.event_name != 'pull_request'
-    needs: build
+    if: github.event_name != 'pull_request' && needs.changes.outputs.has-build == 'true'
+    needs: [changes, build]
     strategy:
-      matrix:
-        include:
-          - component: ripe-atlas
-            image: as218822-ripe-atlas
-          - component: bird
-            image: as218822
-          - component: looking-glass
-            image: as218822-looking-glass
-          - component: console
-            image: as218822-console
-          - component: spoofer
-            image: as218822
+      matrix: ${{ fromJSON(needs.changes.outputs.merge-matrix) }}
     runs-on: ubuntu-24.04
     steps:
       - name: Download image digests
