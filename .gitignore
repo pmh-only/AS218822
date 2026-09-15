@@ -4,4 +4,3 @@ dist/
 .DS_Store
 **/.env.keys
 **/.env.*.keys
-.opencode/skills/impeccable/scripts/bin/
