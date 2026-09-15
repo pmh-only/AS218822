@@ -1,10 +1,13 @@
+id: 113134
 net_id: 43433
 ixlan_id: 3246
 notes: ZXIX Hong Kong virtual GRETAP connection
 speed: 1000
 asn: 218822
 ipaddr4: null
-ipaddr6: 2406:840:1f:1000::21:8822:1
+ipaddr6: 2406:840:1f:1000:0:21:8822:1
 is_rs_peer: true
 bfd_support: false
 operational: true
+net_side_id: null
+ix_side_id: null
