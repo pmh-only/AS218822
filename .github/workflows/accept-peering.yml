@@ -1,0 +1,88 @@
+name: Accept peering request
+
+on:
+  issues:
+    types: [labeled]
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: accept-peering
+
+jobs:
+  accept:
+    if: github.event.label.name == 'peering-approved'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install WireGuard and age
+        run: sudo apt-get update && sudo apt-get install --yes age wireguard-tools
+
+      - name: Find requester encryption keys
+        env:
+          REQUESTER: ${{ github.event.issue.user.login }}
+        run: |
+          curl --fail --silent --show-error --location "https://github.com/$REQUESTER.keys" \
+            | grep -E '^(ssh-ed25519|ssh-rsa) ' > /tmp/recipients
+          test -s /tmp/recipients || {
+            echo "@$REQUESTER has no supported GitHub SSH encryption key" >&2
+            exit 1
+          }
+
+      - name: Generate and render peering configuration
+        id: peering
+        env:
+          ENDPOINT: 158.179.174.47
+        run: |
+          umask 077
+          wg genkey > /tmp/client-private
+          wg pubkey < /tmp/client-private > /tmp/client-public
+          python3 .github/scripts/accept-peering.py \
+            --event "$GITHUB_EVENT_PATH" \
+            --client-public-key "$(cat /tmp/client-public)" \
+            --endpoint "$ENDPOINT" \
+            --output-client /tmp/client.conf > /tmp/peering.json
+          sed -i "s|CLIENT_PRIVATE_KEY|$(cat /tmp/client-private)|" /tmp/client.conf
+          age --armor --recipients-file /tmp/recipients --output /tmp/client.conf.age /tmp/client.conf
+          echo "interface=$(jq -r .interface /tmp/peering.json)" >> "$GITHUB_OUTPUT"
+          echo "port=$(jq -r .port /tmp/peering.json)" >> "$GITHUB_OUTPUT"
+          echo "local_address=$(jq -r .local_address /tmp/peering.json)" >> "$GITHUB_OUTPUT"
+          echo "remote_address=$(jq -r .remote_address /tmp/peering.json)" >> "$GITHUB_OUTPUT"
+
+      - name: Commit generated server configuration
+        env:
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add routing/edge/gre-gateway
+          git commit -m "Add peering for issue #$ISSUE_NUMBER"
+          git push
+
+      - name: Deliver encrypted client configuration
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE: ${{ github.event.issue.number }}
+          REQUESTER: ${{ github.event.issue.user.login }}
+          INTERFACE: ${{ steps.peering.outputs.interface }}
+          PORT: ${{ steps.peering.outputs.port }}
+          LOCAL_ADDRESS: ${{ steps.peering.outputs.local_address }}
+          REMOTE_ADDRESS: ${{ steps.peering.outputs.remote_address }}
+        run: |
+          {
+            printf '@%s, the server configuration has been generated and queued for deployment.\n\n' "$REQUESTER"
+            printf -- '- Interface: `%s`\n' "$INTERFACE"
+            printf -- '- AS218822 address: `%s`\n' "$LOCAL_ADDRESS"
+            printf -- '- Your address: `%s`\n' "$REMOTE_ADDRESS"
+            printf -- '- UDP port: `%s`\n\n' "$PORT"
+            printf 'Your client configuration is encrypted to the supported SSH keys on your GitHub account:\n\n```age\n'
+            cat /tmp/client.conf.age
+            printf '```\n\nDecrypt it with `age --decrypt -i ~/.ssh/id_ed25519`, then store the output with mode `0600`. The private key exists only in this encrypted response.\n'
+          } > /tmp/comment.md
+          gh issue comment "$ISSUE" --body-file /tmp/comment.md
+          gh issue close "$ISSUE" --reason completed
+          gh issue edit "$ISSUE" --add-label peering-active

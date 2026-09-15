@@ -1,0 +1,59 @@
+name: Peering request
+description: Request an automated IPv6 WireGuard and BGP peering with AS218822
+title: "Peering request: AS"
+labels:
+  - peering-request
+body:
+  - type: markdown
+    attributes:
+      value: |
+        AS218822 will generate the WireGuard credentials and tunnel addresses after review. Do not post a WireGuard key, endpoint, or private information here.
+
+        The generated client configuration is encrypted to the supported RSA or Ed25519 SSH keys published on your GitHub account. Add one at https://github.com/settings/keys before submitting.
+  - type: input
+    id: asn
+    attributes:
+      label: Autonomous system number
+      description: The public ASN that will establish the BGP session.
+      placeholder: "64500"
+    validations:
+      required: true
+  - type: input
+    id: network
+    attributes:
+      label: Network name
+      description: The name shown in the issue and activation message.
+      placeholder: Example Network
+    validations:
+      required: true
+  - type: textarea
+    id: prefixes
+    attributes:
+      label: IPv6 prefixes
+      description: One globally routed prefix per line. Prefixes must be /48 or shorter and authorized for the requested ASN.
+      placeholder: "2a00:1450::/32"
+    validations:
+      required: true
+  - type: input
+    id: max-prefixes
+    attributes:
+      label: Maximum IPv6 prefixes
+      description: The maximum number of routes expected on this session.
+      placeholder: "10"
+    validations:
+      required: true
+  - type: input
+    id: peeringdb
+    attributes:
+      label: PeeringDB profile
+      description: A current PeeringDB network URL used during review.
+      placeholder: https://www.peeringdb.com/net/00000
+    validations:
+      required: true
+  - type: checkboxes
+    id: authorization
+    attributes:
+      label: Authorization
+      options:
+        - label: I am authorized to request peering for this ASN and understand that AS218822 will verify the request through public registry contact information.
+          required: true

@@ -401,15 +401,16 @@ const policy = [
         </div>
         <div class="request-copy">
           <p>
-            Include your ASN, PeeringDB profile, interconnection location,
-            IPv6 address, and expected maximum-prefix count. Tunnel proposals
-            should also include the preferred tunnel type and endpoint.
+            Open a GitHub issue with your ASN, PeeringDB profile, IPv6 prefixes,
+            and expected maximum-prefix count. After approval, we generate both
+            sides of the WireGuard tunnel and encrypt your client configuration
+            to the SSH keys on your GitHub account.
           </p>
-          <p class="request-meta">Peering, operations, and abuse contact</p>
-          <a class="request-link" href="mailto:pmh_only@pmh.codes?subject=Peering%20request%20for%20AS218822">
-            pmh_only@pmh.codes <span aria-hidden="true">-&gt;</span>
+          <p class="request-meta">No WireGuard key or endpoint required</p>
+          <a class="request-link" href="https://github.com/pmh-only/AS218822/issues/new?template=peering.yml">
+            Open a peering request <span aria-hidden="true">-&gt;</span>
           </a>
-          <p class="request-note">Requests are reviewed on a best-effort basis. These controls are not a claim of MANRS membership or certification.</p>
+          <p class="request-note">Requests are verified through registry contact information and reviewed on a best-effort basis. An RSA or Ed25519 SSH key must be published on your GitHub account for encrypted delivery.</p>
         </div>
       </section>
     </main>

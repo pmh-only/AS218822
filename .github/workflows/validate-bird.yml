@@ -5,12 +5,18 @@ on:
   pull_request:
     paths:
       - ".github/workflows/validate-bird.yml"
+      - ".github/workflows/accept-peering.yml"
+      - ".github/scripts/accept-peering.py"
+      - ".github/scripts/test_accept_peering.py"
       - "routing/**"
   push:
     branches:
       - main
     paths:
       - ".github/workflows/validate-bird.yml"
+      - ".github/workflows/accept-peering.yml"
+      - ".github/scripts/accept-peering.py"
+      - ".github/scripts/test_accept_peering.py"
       - "routing/**"
 
 permissions:
@@ -78,6 +84,9 @@ jobs:
             --volume "$PWD/routing/bird:/etc/bird:ro" \
             --volume "$PWD/routing/tunnels:/etc/tunnels:ro" \
             as218822-bird render-bird-config
+
+      - name: Test peering request automation
+        run: python3 .github/scripts/test_accept_peering.py
 
       - name: Parse Vultr edge configuration
         run: |
