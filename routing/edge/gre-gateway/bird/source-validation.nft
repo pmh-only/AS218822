@@ -27,7 +27,9 @@ table inet as218822_sav {
         iifname "lunalight" counter name ingress_spoof drop
     }
 
-    include "/etc/bird/github-peers.nft"
+    chain github_peers {
+        # PEERING_AUTOMATION_INSERT
+    }
     chain egress {
         type filter hook postrouting priority 110; policy accept;
         oifname $upstreams jump upstream_source

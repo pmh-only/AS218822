@@ -139,16 +139,16 @@ def accept(root, request, client_public_key, endpoint):
         "}\n"
     )
 
-    nft_path = root / "routing/edge/gre-gateway/bird/github-peers.nft"
+    nft_path = root / "routing/edge/gre-gateway/bird/source-validation.nft"
     nft = nft_path.read_text()
-    marker = "    # PEERING_AUTOMATION_INSERT\n"
+    marker = "        # PEERING_AUTOMATION_INSERT\n"
     if marker not in nft:
         raise ValueError(f"Missing insertion marker in {nft_path}")
     source_prefixes = ", ".join(str(prefix) for prefix in request["prefixes"])
     rules = (
-        f"    iifname \"{interface}\" ip6 saddr {remote_address} ip6 daddr {local_address} return\n"
-        f"    iifname \"{interface}\" ip6 saddr {{ {source_prefixes} }} ip6 daddr {OWN_PREFIX} return\n"
-        f"    iifname \"{interface}\" counter name ingress_spoof drop\n"
+        f"        iifname \"{interface}\" ip6 saddr {remote_address} ip6 daddr {local_address} return\n"
+        f"        iifname \"{interface}\" ip6 saddr {{ {source_prefixes} }} ip6 daddr {OWN_PREFIX} return\n"
+        f"        iifname \"{interface}\" counter name ingress_spoof drop\n"
     )
     nft_path.write_text(nft.replace(marker, rules + marker))
 

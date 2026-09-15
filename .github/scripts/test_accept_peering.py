@@ -51,8 +51,8 @@ https://www.peeringdb.com/net/433
             bird = root / "routing/edge/gre-gateway/bird/peers"
             tunnel.mkdir(parents=True)
             bird.mkdir(parents=True)
-            nft = bird.parent / "github-peers.nft"
-            nft.write_text("chain github_peers {\n    # PEERING_AUTOMATION_INSERT\n}\n")
+            nft = bird.parent / "source-validation.nft"
+            nft.write_text("chain github_peers {\n        # PEERING_AUTOMATION_INSERT\n}\n")
 
             result = MODULE.accept(
                 root,
