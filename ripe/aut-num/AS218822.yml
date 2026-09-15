@@ -120,6 +120,14 @@ objects:
         value: afi ipv6.unicast from AS203168 accept ANY
       - name: mp-export
         value: afi ipv6.unicast to AS203168 announce AS218822
+      - name: mp-import
+        value: afi ipv6.unicast from AS35708 accept ANY
+      - name: mp-export
+        value: afi ipv6.unicast to AS35708 announce AS218822
+      - name: mp-import
+        value: afi ipv6.unicast from AS140961 accept ANY
+      - name: mp-export
+        value: afi ipv6.unicast to AS140961 announce AS218822
     link:
       href: https://rest.db.ripe.net/ripe/aut-num/AS218822
       type: locator
