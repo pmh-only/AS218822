@@ -18,6 +18,7 @@ table inet as218822_sav {
     include "/etc/bird-source-validation.nft"
 
     counter ingress_spoof { }
+    counter portal_denied { }
     chain stub_source {
         type filter hook prerouting priority -300; policy accept;
         iifname "gh*" jump github_peers
@@ -25,6 +26,21 @@ table inet as218822_sav {
         iifname "lunalight" ip6 saddr fd00:218:822:2014:23::1 ip6 daddr fd00:218:822:2014:23:: return
         iifname "lunalight" ip6 saddr { 2a0f:6284:b::/48, 2a0f:6284:c::/48 } return
         iifname "lunalight" counter name ingress_spoof drop
+        # WireGuard cryptokey routing also enforces each client's assigned /128.
+        iifname "portal" ip6 saddr != 2a06:9801:ff0:200::/64 counter name ingress_spoof drop
+    }
+
+    chain portal_input {
+        type filter hook input priority 0; policy accept;
+        # Tunnel users receive internet transit, not access to the router itself.
+        iifname "portal" counter name portal_denied drop
+    }
+
+    chain portal_forward {
+        type filter hook forward priority 0; policy accept;
+        # Keep users isolated from one another and AS218822 infrastructure.
+        iifname "portal" ip6 daddr 2a06:9801:ff0::/44 counter name portal_denied drop
+        iifname "portal" ip6 daddr != 2000::/3 counter name portal_denied drop
     }
 
     chain github_peers {

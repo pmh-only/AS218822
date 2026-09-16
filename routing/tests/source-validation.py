@@ -124,7 +124,7 @@ table inet test_observer {
 }
 """)
 
-for interface in ("client", "lunalight", "tailscale0", "core"):
+for interface in ("client", "lunalight", "tailscale0", "core", "portal"):
     run("ip", "link", "add", interface, "type", "veth", "peer", "name", "p-" + interface)
     for side in (interface, "p-" + interface):
         run("ip", "link", "set", side, "addrgenmode", "none")
@@ -200,6 +200,10 @@ with socket.socket(socket.AF_INET6, socket.SOCK_DGRAM) as sender:
     expect("kernel-generated neighbor discovery", lambda: sender.sendto(b"test", ("2a0e:8f01:1000:16::1", 54321)), "neighbor_discovery", "test_observer")
 
 load("/routing/edge/gre-gateway/bird/source-validation.nft")
+run("ip", "-6", "route", "replace", "2606:4700::1111/128", "dev", "hkix-gretap")
+expect("portal assigned source reaches the Internet", lambda: inject("portal", "2a06:9801:ff0:200::82", "2606:4700::1111"), "egress_valid")
+expect("portal spoofed source rejected", lambda: inject("portal", "2001:db8::82", "2606:4700::1111"), "ingress_spoof")
+expect("portal cannot access the router", lambda: inject("portal", "2a06:9801:ff0:200::82", "fd00:ffff::1"), "portal_denied")
 check_external_ingress("hkix-gretap")
 check_external_ingress("p7ix-342")
 check_external_ingress("zxix")

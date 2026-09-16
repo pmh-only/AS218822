@@ -4,7 +4,7 @@ import "@carbon/styles/css/styles.css";
 import "@carbon/charts-react/styles.css";
 
 export function getStaticPaths() {
-  return ["routing", "traffic", "validation", "workloads", "operator", "sources"].map((page) => ({
+  return ["tunnels", "routing", "traffic", "validation", "workloads", "operator", "sources"].map((page) => ({
     params: { page },
     props: { page },
   }));

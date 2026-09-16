@@ -5,6 +5,7 @@ import { extname, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createAuth } from "./auth.mjs";
 import { createMonitoring, ranges } from "./monitoring.mjs";
+import { createTunnelService, validCsrf } from "./tunnels.mjs";
 
 const host = process.env.CONSOLE_HOST ?? "0.0.0.0";
 const port = Number.parseInt(process.env.CONSOLE_LISTEN_PORT ?? "8080", 10);
@@ -12,6 +13,8 @@ const prometheusUrl = (process.env.PROMETHEUS_URL ?? "http://prometheus.monitori
 const publicDir = fileURLToPath(new URL("./dist/", import.meta.url));
 const auth = createAuth();
 const monitoring = createMonitoring(prometheusUrl);
+const tunnels = createTunnelService();
+const trustedOrigin = process.env.OIDC_REDIRECT_URI ? new URL(process.env.OIDC_REDIRECT_URI).origin : null;
 
 const securityHeaders = {
   "content-security-policy": "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; font-src 'self' https://1.www.s81c.com; img-src 'self' data:; connect-src 'self'",
@@ -31,6 +34,18 @@ const contentTypes = {
 function respond(response, status, body, headers = {}) {
   response.writeHead(status, { "cache-control": "private, no-store", ...securityHeaders, ...headers });
   response.end(body);
+}
+
+async function jsonBody(request) {
+  const chunks = [];
+  let size = 0;
+  for await (const chunk of request) {
+    size += chunk.length;
+    if (size > 4096) throw Object.assign(new Error("Request body is too large"), { status: 413 });
+    chunks.push(chunk);
+  }
+  try { return JSON.parse(Buffer.concat(chunks).toString("utf8")); }
+  catch { throw Object.assign(new Error("Request body must be valid JSON"), { status: 400 }); }
 }
 
 async function serveFile(request, response) {
@@ -64,6 +79,19 @@ const server = createServer(async (request, response) => {
   try { url = new URL(request.url, "http://console"); }
   catch { return respond(response, 400, "Bad request\n"); }
   if (await auth.handle(request, response, respond, url.pathname)) return;
+  if (url.pathname === "/api/tunnels" || url.pathname.startsWith("/api/tunnels/")) {
+    const user = await auth.session(request);
+    if (!user) return respond(response, 401, JSON.stringify({ error: "Sign in to manage IP tunnels" }), { "content-type": "application/json; charset=utf-8" });
+    try {
+      if (url.pathname === "/api/tunnels" && request.method === "GET") return respond(response, 200, JSON.stringify(await tunnels.list(user.sub)), { "content-type": "application/json; charset=utf-8" });
+      if (!validCsrf(user, request.headers["x-csrf-token"]) || (trustedOrigin && request.headers.origin !== trustedOrigin)) return respond(response, 403, JSON.stringify({ error: "Request rejected. Refresh and try again." }), { "content-type": "application/json; charset=utf-8" });
+      if (url.pathname === "/api/tunnels" && request.method === "POST") return respond(response, 201, JSON.stringify(await tunnels.create(user.sub, (await jsonBody(request)).name)), { "content-type": "application/json; charset=utf-8" });
+      if (request.method === "DELETE" && url.pathname.split("/").length === 4) { await tunnels.remove(user.sub, url.pathname.slice("/api/tunnels/".length)); return respond(response, 204, ""); }
+      return respond(response, 405, JSON.stringify({ error: "Method not allowed" }), { allow: url.pathname === "/api/tunnels" ? "GET, POST" : "DELETE", "content-type": "application/json; charset=utf-8" });
+    } catch (error) {
+      return respond(response, error.status ?? 503, JSON.stringify({ error: error.status && error.status < 500 ? error.message : "IP tunnel service is temporarily unavailable" }), { "content-type": "application/json; charset=utf-8" });
+    }
+  }
   if (request.method !== "GET") return respond(response, 405, "Method not allowed\n", { allow: "GET", "content-type": "text/plain; charset=utf-8" });
   if (request.url === "/healthz") return respond(response, 200, "ok\n", { "content-type": "text/plain; charset=utf-8" });
   if (url.pathname === "/api/auth") {

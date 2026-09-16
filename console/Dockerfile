@@ -8,7 +8,7 @@ COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 COPY astro.config.mjs tsconfig.json ./
 COPY src ./src
-COPY server.mjs auth.mjs monitoring.mjs *.test.mjs ./
+COPY server.mjs auth.mjs monitoring.mjs tunnels.mjs *.test.mjs ./
 COPY --from=prometheus /bin/promtool /usr/local/bin/promtool
 RUN pnpm build && PROMTOOL=/usr/local/bin/promtool pnpm test && pnpm prune --prod
 
@@ -16,7 +16,7 @@ FROM node:24-alpine
 
 WORKDIR /app
 ENV NODE_ENV=production
-COPY --chown=node:node server.mjs auth.mjs monitoring.mjs ./
+COPY --chown=node:node server.mjs auth.mjs monitoring.mjs tunnels.mjs ./
 COPY --chown=node:node --from=build /app/node_modules ./node_modules
 COPY --chown=node:node --from=build /app/dist ./dist
 

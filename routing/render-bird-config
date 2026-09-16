@@ -7,6 +7,7 @@ runtime_wireguard=/run/bird/wireguard
 runtime_gre=/run/bird/gre
 runtime_zerotier=/run/bird/zerotier
 wireguard_configs=
+wireguard_peer_watcher_pid=
 gre_interfaces=
 zerotier_configs=
 zerotier_pid=
@@ -293,6 +294,10 @@ configure_anycast_return_paths() {
 }
 
 cleanup() {
+    if [ -n "$wireguard_peer_watcher_pid" ]; then
+        kill -TERM "$wireguard_peer_watcher_pid" 2>/dev/null || true
+        wait "$wireguard_peer_watcher_pid" 2>/dev/null || true
+    fi
     for path in $anycast_return_paths; do
         old_ifs=$IFS
         IFS=,
@@ -311,6 +316,26 @@ cleanup() {
         kill -TERM "$zerotier_pid" 2>/dev/null || true
         wait "$zerotier_pid" 2>/dev/null || true
     fi
+}
+
+watch_wireguard_peers() {
+    peer_config=${WIREGUARD_PEER_CONFIG:-}
+    [ -n "$peer_config" ] || return 0
+    interface=${WIREGUARD_PEER_INTERFACE:-portal}
+    validate_interface_name "$interface"
+    applied=/run/bird/${interface}-peers.applied
+    (
+        while :; do
+            if [ -r "$peer_config" ] && { [ ! -f "$applied" ] || ! cmp -s "$peer_config" "$applied"; }; then
+                if wg syncconf "$interface" "$peer_config"; then
+                    cp "$peer_config" "$applied"
+                    chmod 0600 "$applied"
+                fi
+            fi
+            sleep 5
+        done
+    ) &
+    wireguard_peer_watcher_pid=$!
 }
 
 terminate() {
@@ -363,6 +388,10 @@ for config in "$runtime_wireguard"/*.conf; do
         wireguard_configs="$config $wireguard_configs"
     fi
 done
+
+if [ "${BIRD_VALIDATE:-0}" != 1 ]; then
+    watch_wireguard_peers
+fi
 
 for config in "$runtime_gre"/*.conf; do
     [ -f "$config" ] || continue

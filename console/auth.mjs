@@ -75,6 +75,8 @@ export function createAuth(env = process.env, discover = oidc.discovery) {
     }
     try {
       if (pathname === "/auth/login") {
+        const requested = new URL(request.url, redirect.origin).searchParams.get("return_to");
+        const returnTo = requested && /^\/[a-z0-9-]*$/.test(requested) && !requested.startsWith("/auth") ? requested : "/operator";
         const verifier = oidc.randomPKCECodeVerifier();
         const state = token();
         const nonce = token();
@@ -82,7 +84,7 @@ export function createAuth(env = process.env, discover = oidc.discovery) {
           redirect_uri: redirect.href, scope: scopes, response_mode: "query", state, nonce,
           code_challenge: await oidc.calculatePKCECodeChallenge(verifier), code_challenge_method: "S256",
         });
-        respond(response, 302, "", { location: url.href, "set-cookie": cookie("transaction", await seal({ verifier, state, nonce }, "transaction", 600), 600) });
+        respond(response, 302, "", { location: url.href, "set-cookie": cookie("transaction", await seal({ verifier, state, nonce, returnTo }, "transaction", 600), 600) });
       } else {
         const transaction = await unseal(request, "transaction");
         if (!transaction) throw new Error("Missing or expired authorization transaction");
@@ -103,7 +105,7 @@ export function createAuth(env = process.env, discover = oidc.discovery) {
         if (age <= 0) throw new Error("Expired identity token");
         const name = String(claims.name ?? claims.preferred_username ?? claims.sub).slice(0, 160);
         const value = await seal({ sub: claims.sub, name, csrf: token() }, "session", age);
-        respond(response, 302, "", { location: "/operator", "set-cookie": [cookie("transaction", "", 0), cookie("session", value, age)] });
+        respond(response, 302, "", { location: transaction.returnTo ?? "/operator", "set-cookie": [cookie("transaction", "", 0), cookie("session", value, age)] });
       }
     } catch {
       // Provider responses and tokens can contain credentials; do not log them.

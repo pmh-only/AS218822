@@ -115,6 +115,38 @@
 .coverage-notes { list-style: disc; padding-left: 1rem; color: var(--cds-text-secondary); font-size: 0.875rem; line-height: 1.5; }
 .coverage-notes li + li { margin-top: 0.75rem; }
 .coverage-details { border-block: 1px solid var(--cds-border-subtle-01); }
+.tunnel-layout { display: grid; grid-template-columns: minmax(0, 2fr) minmax(18rem, 1fr); gap: 1rem; }
+.tunnel-layout > .cds--inline-notification { grid-column: 1 / -1; margin: 0; max-width: none; }
+.tunnel-create, .tunnel-result, .tunnel-connections, .tunnel-help, .tunnel-signin { padding: 1.5rem; background: var(--cds-layer-01); }
+.tunnel-create { display: grid; grid-template-columns: minmax(0, 1fr) minmax(20rem, 0.8fr); gap: 3rem; align-items: end; }
+.tunnel-create .cds--tag { margin: 0 0 1rem; }
+.tunnel-create h2, .tunnel-result h2, .tunnel-connections h2, .tunnel-help h2, .tunnel-signin h2 { margin-bottom: 0.5rem; }
+.tunnel-create form { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 0 1px; }
+.tunnel-create form .cds--btn { min-height: 3rem; }
+.tunnel-quota { grid-column: 1 / -1; margin-top: 0.5rem; font-size: 0.75rem; }
+.tunnel-result { grid-column: 1 / -1; }
+.tunnel-result > .cds--inline-notification { max-width: none; margin: 0 0 1.5rem; }
+.tunnel-result-heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem; }
+.tunnel-result-heading code, .connection-list code { display: block; margin-top: 0.5rem; color: var(--cds-text-secondary); overflow-wrap: anywhere; }
+.tunnel-result label { display: block; margin-bottom: 0.5rem; color: var(--cds-text-secondary); font-size: 0.75rem; }
+.tunnel-result textarea { width: 100%; min-height: 17rem; resize: vertical; padding: 1rem; border: 1px solid var(--cds-border-strong-01); border-bottom-color: var(--cds-border-interactive); background: var(--cds-field-02); color: var(--cds-text-primary); font: 0.8rem/1.55 var(--cds-code-01-font-family, monospace); }
+.tunnel-connections { min-width: 0; }
+.tunnel-section-heading { display: flex; justify-content: space-between; gap: 2rem; margin-bottom: 1.5rem; }
+.tunnel-section-heading > div:last-child { flex-shrink: 0; text-align: right; font-size: 0.75rem; color: var(--cds-text-secondary); }
+.tunnel-section-heading code { display: block; margin-top: 0.5rem; color: var(--cds-text-primary); }
+.tunnel-empty { min-height: 8rem; padding: 1.5rem; border: 1px dashed var(--cds-border-strong-01); }
+.tunnel-empty p { margin-top: 0.5rem; font-size: 0.875rem; }
+.connection-list article { display: flex; justify-content: space-between; align-items: center; gap: 1rem; min-height: 6rem; padding: 1rem; border-top: 1px solid var(--cds-border-subtle-01); }
+.connection-list article:last-child { border-bottom: 1px solid var(--cds-border-subtle-01); }
+.connection-list article span { display: block; margin-top: 0.5rem; color: var(--cds-text-secondary); font-size: 0.75rem; }
+.tunnel-help ol { display: flex; flex-direction: column; gap: 1.25rem; margin-top: 1.5rem; }
+.tunnel-help li { display: flex; gap: 0.75rem; }
+.tunnel-help li > span { display: grid; place-items: center; flex: 0 0 1.5rem; height: 1.5rem; background: var(--cds-background-brand); color: var(--cds-text-on-color); font-size: 0.75rem; }
+.tunnel-help li p, .tunnel-note { margin-top: 0.25rem; font-size: 0.75rem; }
+.tunnel-note { padding-top: 1.25rem; border-top: 1px solid var(--cds-border-subtle-01); }
+.tunnel-signin { display: flex; justify-content: space-between; align-items: center; gap: 2rem; min-height: 14rem; }
+.tunnel-signin p { max-width: 65ch; }
+.tunnel-wait { padding: 2rem; }
 .registry-footer { display: flex; flex-wrap: wrap; align-items: center; gap: 1.5rem 2.5rem; margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--cds-border-subtle-01); font-size: 0.75rem; color: var(--cds-text-secondary); line-height: 1.5; }
 .registry-footer > div { display: flex; flex-direction: column; gap: 0.25rem; }
 .registry-footer strong { color: var(--cds-text-primary); }
@@ -137,6 +169,8 @@
   .history-row { grid-template-columns: 14rem minmax(0, 1fr) 4rem; gap: 0.75rem; }
   .history-axis { margin-left: 14.75rem; }
   .dashboard .topology-canvas { height: 32rem; }
+  .tunnel-layout { grid-template-columns: 1fr; }
+  .tunnel-result { grid-column: 1; }
 }
 
 @media (max-width: 42rem) {
@@ -172,6 +206,12 @@
   .node-utilization { grid-template-columns: 1fr; gap: 1rem; }
   .telemetry-table .cds--pagination { flex-wrap: wrap; gap: 0.5rem; }
   .registry-footer { column-gap: 1.5rem; }
+  .tunnel-create { grid-template-columns: 1fr; gap: 1.5rem; padding: 1rem; }
+  .tunnel-create form { grid-template-columns: 1fr; gap: 0.75rem; }
+  .tunnel-create form .cds--btn { width: 100%; max-width: none; }
+  .tunnel-result, .tunnel-connections, .tunnel-help, .tunnel-signin { padding: 1rem; }
+  .tunnel-result-heading, .tunnel-section-heading, .tunnel-signin { align-items: flex-start; flex-direction: column; }
+  .tunnel-section-heading > div:last-child { text-align: left; }
 }
 
 @media (prefers-reduced-motion: reduce) {

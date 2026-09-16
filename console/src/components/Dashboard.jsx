@@ -3,12 +3,14 @@ import { Button, Content, Header, HeaderName, InlineNotification, Select, Select
 import { Login, Logout, Renew } from "@carbon/icons-react";
 import NetworkTopology from "./NetworkTopology.jsx";
 import OperatorMonitoring from "./OperatorMonitoring.jsx";
+import TunnelService from "./TunnelService.jsx";
 import { Chart, Empty, Metric, Panel, State, StateHistory, TelemetryTable, duration, number, percent, rate, reading, samples, time, total } from "./MonitoringWidgets.jsx";
 import "./Dashboard.css";
 
-const navigation = [["overview", "/", "Overview"], ["routing", "/routing", "Routing"], ["traffic", "/traffic", "Traffic"], ["validation", "/validation", "RPKI & probes"], ["workloads", "/workloads", "Workloads"], ["operator", "/operator", "Operator"], ["sources", "/sources", "Data sources"]];
+const navigation = [["overview", "/", "Overview"], ["tunnels", "/tunnels", "IP tunnels"], ["routing", "/routing", "Routing"], ["traffic", "/traffic", "Traffic"], ["validation", "/validation", "RPKI & probes"], ["workloads", "/workloads", "Workloads"], ["operator", "/operator", "Operator"], ["sources", "/sources", "Data sources"]];
 const pages = {
   overview: ["Network operations", "Live routing, reachability, and infrastructure telemetry for AS218822."],
+  tunnels: ["Personal IPv6 tunnel", "Create a WireGuard connection with a random, globally routed IPv6 address."],
   routing: ["Routing health", "Current protocol state and sampled stability across every reporting location."],
   traffic: ["Traffic & transport", "Tailscale overlay measurements only, not total BGP transit. Rates use a five-minute average."],
   validation: ["Reachability & route validation", "External IPv6 checks and the RPKI cache used by the routing daemons."],
@@ -150,6 +152,8 @@ export default function Dashboard({ page = "overview" }) {
         <Metric label="Firing alerts" value={number(summary?.activeAlerts)} detail={summary?.activeAlerts != null ? `${current.alerts.filter((alert) => alert.state === "pending").length} pending alert rules` : "Alert state unavailable"} />
         <Metric label="Validated prefixes" value={summary?.vrps == null ? "N/A" : new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 2 }).format(summary.vrps)} detail="RPKI validated ROA payloads" />
       </div>}
+
+      {page === "tunnels" && <section aria-label="IP tunnel service" className="dashboard-section dashboard-section--page"><TunnelService auth={auth} sessionValid={sessionValid} /></section>}
 
       {page === "routing" && <section aria-label="Routing health" className="dashboard-section dashboard-section--page"><div className="page-context"><Tag type="gray">{range} window</Tag></div>
         <div className="monitoring-grid">

@@ -66,6 +66,8 @@ test("serves curated public telemetry, actual sample times, and bounded windows"
   for (const path of ["/api/status?range=7d", "/api/status?query=up", "/api/status?range=1h&range=24h"]) assert.equal((await fetch(`${url}${path}`)).status, 400);
   assert.equal((await fetch(`${url}/api/query?query=up`)).status, 404);
   assert.deepEqual(await (await fetch(`${url}/api/auth`)).json(), { enabled: false, user: null });
+  assert.equal((await fetch(`${url}/api/tunnels`)).status, 401);
+  assert.equal((await fetch(`${url}/api/tunnels`, { method: "POST" })).status, 401);
   assert.equal((await fetch(`${url}/api/operator`)).status, 401);
   assert.equal((await fetch(`${url}/auth/login`)).status, 404);
   assert.equal((await fetch(`${url}/api/status`, { method: "POST" })).status, 405);
