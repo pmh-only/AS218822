@@ -11,6 +11,7 @@ gre_interfaces=
 zerotier_configs=
 zerotier_pid=
 bird_pid=
+anycast_return_paths=
 
 rm -rf "$runtime_peers" "$runtime_wireguard" "$runtime_gre" "$runtime_zerotier"
 mkdir -p "$runtime_peers" "$runtime_wireguard" "$runtime_gre" "$runtime_zerotier"
@@ -239,7 +240,67 @@ start_zerotier() {
     done
 }
 
+configure_anycast_return_paths() {
+    [ -n "${ANYCAST_RETURN_PATHS:-}" ] || return 0
+
+    # Each path is interface,mark,table,priority[,gateway]. Dedicated policy
+    # tables keep ICMP replies on the PoP through which their requests arrived.
+    for path in $ANYCAST_RETURN_PATHS; do
+        old_ifs=$IFS
+        IFS=,
+        set -- $path
+        IFS=$old_ifs
+        if [ "$#" -ne 4 ] && [ "$#" -ne 5 ]; then
+            echo "Invalid anycast return path: $path" >&2
+            exit 1
+        fi
+        interface=$1
+        mark=$2
+        table=$3
+        priority=$4
+        gateway=${5:--}
+        validate_interface_name "$interface"
+        for value in "$mark" "$table" "$priority"; do
+            case "$value" in
+                ''|*[!0-9]*)
+                    echo "Anycast mark, table, and priority must be decimal integers: $path" >&2
+                    exit 1
+                    ;;
+            esac
+        done
+        if ! ip link show dev "$interface" >/dev/null 2>&1; then
+            echo "Anycast return interface does not exist: $interface" >&2
+            exit 1
+        fi
+
+        if [ "$gateway" = - ]; then
+            ip -6 route replace default dev "$interface" table "$table"
+        else
+            case "$gateway" in
+                *[!0-9a-fA-F:]*)
+                    echo "Invalid anycast return gateway: $gateway" >&2
+                    exit 1
+                    ;;
+            esac
+            ip -6 route replace default via "$gateway" dev "$interface" table "$table"
+        fi
+        ip -6 rule del pref "$priority" 2>/dev/null || true
+        ip -6 rule add pref "$priority" fwmark "$mark" lookup "$table"
+        nft add rule inet as218822_sav anycast_ingress \
+            iifname "$interface" ct mark set "$mark"
+        anycast_return_paths="$path $anycast_return_paths"
+    done
+}
+
 cleanup() {
+    for path in $anycast_return_paths; do
+        old_ifs=$IFS
+        IFS=,
+        set -- $path
+        IFS=$old_ifs
+        ip -6 rule del pref "$4" 2>/dev/null || true
+        ip -6 route flush table "$3" 2>/dev/null || true
+    done
     for config in $wireguard_configs; do
         wg-quick down "$config" >/dev/null 2>&1 || true
     done
@@ -307,6 +368,10 @@ for config in "$runtime_gre"/*.conf; do
     [ -f "$config" ] || continue
     configure_gre "$config"
 done
+
+if [ "${BIRD_VALIDATE:-0}" != 1 ]; then
+    configure_anycast_return_paths
+fi
 
 if [ "${BIRD_VALIDATE:-0}" = 1 ]; then
     exec bird -p -c /etc/bird/bird.conf

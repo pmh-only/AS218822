@@ -1,4 +1,19 @@
 # Included inside each router's dedicated table, never the host's filter table.
+# Preserve the ingress PoP for the aggregate's ICMP endpoint. The entrypoint
+# adds per-interface conntrack marks; the route chain restores them before the
+# kernel performs the echo-reply route lookup.
+chain anycast_ingress {
+}
+chain anycast_mark {
+    type filter hook prerouting priority -310; policy accept;
+    ip6 daddr 2a06:9801:ff0:: icmpv6 type echo-request jump anycast_ingress
+    ip6 saddr 2a06:9801:ff0:: icmpv6 type echo-reply meta mark set ct mark
+}
+chain anycast_return {
+    type route hook output priority -200; policy accept;
+    ip6 saddr 2a06:9801:ff0:: icmpv6 type echo-reply meta mark set ct mark
+}
+
 counter local_spoof { }
 chain local_source {
     type filter hook output priority -150; policy accept;
