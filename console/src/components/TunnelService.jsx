@@ -47,10 +47,12 @@ export default function TunnelService({ auth, sessionValid }) {
 
   function download() {
     const link = document.createElement("a");
-    link.href = URL.createObjectURL(new Blob([created.config], { type: "text/plain" }));
+    link.href = URL.createObjectURL(new Blob([created.config], { type: "application/x-wireguard-profile" }));
     link.download = `as218822-${created.name.toLowerCase().replace(/[^a-z0-9]+/g, "-") || "tunnel"}.conf`;
+    document.body.append(link);
     link.click();
-    URL.revokeObjectURL(link.href);
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(link.href), 1000);
   }
 
   if (!auth) return <div className="tunnel-wait"><InlineLoading description="Checking your session" /></div>;
