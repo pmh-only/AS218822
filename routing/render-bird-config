@@ -324,10 +324,18 @@ watch_wireguard_peers() {
     interface=${WIREGUARD_PEER_INTERFACE:-portal}
     validate_interface_name "$interface"
     applied=/run/bird/${interface}-peers.applied
+    base=/run/bird/${interface}-base.conf
+    desired=/run/bird/${interface}-desired.conf
+    # syncconf replaces interface settings as well as peers. Preserve the
+    # private key and fixed listen port while replacing only dynamic peers.
+    wg showconf "$interface" | sed '/^\[Peer\]/,$d' > "$base"
+    chmod 0600 "$base"
     (
         while :; do
             if [ -r "$peer_config" ] && { [ ! -f "$applied" ] || ! cmp -s "$peer_config" "$applied"; }; then
-                if wg syncconf "$interface" "$peer_config"; then
+                { cat "$base"; printf '\n'; cat "$peer_config"; } > "$desired"
+                chmod 0600 "$desired"
+                if wg syncconf "$interface" "$desired"; then
                     cp "$peer_config" "$applied"
                     chmod 0600 "$applied"
                 fi
