@@ -129,7 +129,12 @@
 .tunnel-result-heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem; }
 .tunnel-result-heading code, .connection-list code { display: block; margin-top: 0.5rem; color: var(--cds-text-secondary); overflow-wrap: anywhere; }
 .tunnel-result label { display: block; margin-bottom: 0.5rem; color: var(--cds-text-secondary); font-size: 0.75rem; }
+.tunnel-profile { display: grid; grid-template-columns: minmax(0, 1fr) 15rem; gap: 1.5rem; align-items: start; }
 .tunnel-result textarea { width: 100%; min-height: 17rem; resize: vertical; padding: 1rem; border: 1px solid var(--cds-border-strong-01); border-bottom-color: var(--cds-border-interactive); background: var(--cds-field-02); color: var(--cds-text-primary); font: 0.8rem/1.55 var(--cds-code-01-font-family, monospace); }
+.tunnel-qr { display: flex; flex-direction: column; align-items: center; padding: 0.5rem; text-align: center; }
+.tunnel-qr svg { display: block; width: 100%; height: auto; max-width: 14rem; background: #fff; }
+.tunnel-qr strong { margin-top: 0.75rem; }
+.tunnel-qr p { margin-top: 0.25rem; font-size: 0.75rem; }
 .tunnel-connections { min-width: 0; }
 .tunnel-section-heading { display: flex; justify-content: space-between; gap: 2rem; margin-bottom: 1.5rem; }
 .tunnel-section-heading > div:last-child { flex-shrink: 0; text-align: right; font-size: 0.75rem; color: var(--cds-text-secondary); }
@@ -211,6 +216,8 @@
   .tunnel-create form .cds--btn { width: 100%; max-width: none; }
   .tunnel-result, .tunnel-connections, .tunnel-help, .tunnel-signin { padding: 1rem; }
   .tunnel-result-heading, .tunnel-section-heading, .tunnel-signin { align-items: flex-start; flex-direction: column; }
+  .tunnel-profile { grid-template-columns: 1fr; }
+  .tunnel-qr { width: 100%; }
   .tunnel-section-heading > div:last-child { text-align: left; }
 }
 

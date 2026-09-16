@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Button, InlineLoading, InlineNotification, Tag, TextInput } from "@carbon/react";
 import { Add, Download, Login, TrashCan } from "@carbon/icons-react";
+import { QRCodeSVG } from "qrcode.react";
 
 export default function TunnelService({ auth, sessionValid }) {
   const [service, setService] = useState(null);
@@ -72,11 +73,11 @@ export default function TunnelService({ auth, sessionValid }) {
     {created && <section className="tunnel-result" aria-labelledby="tunnel-ready-title">
       <InlineNotification kind="success" lowContrast hideCloseButton title="Connection ready" subtitle="Download this configuration now. The private key is shown once and is not stored by AS218822." />
       <div className="tunnel-result-heading"><div><h2 id="tunnel-ready-title">{created.name}</h2><code>{created.address}/128</code></div><Button kind="secondary" renderIcon={Download} onClick={download}>Download .conf</Button></div>
-      <label htmlFor="connection-config">WireGuard configuration</label><textarea id="connection-config" readOnly spellCheck="false" value={created.config} onFocus={(event) => event.target.select()} />
+      <div className="tunnel-profile"><div><label htmlFor="connection-config">WireGuard configuration</label><textarea id="connection-config" readOnly spellCheck="false" value={created.config} onFocus={(event) => event.target.select()} /></div><div className="tunnel-qr"><QRCodeSVG value={created.config} size={224} level="L" marginSize={2} title={`WireGuard configuration for ${created.name}`} role="img" /><strong>Scan to connect</strong><p>Open the WireGuard app and scan this code.</p></div></div>
     </section>}
 
     <section className="tunnel-connections" aria-labelledby="connections-title"><div className="tunnel-section-heading"><div><h2 id="connections-title">Your connections</h2><p>Revoke devices you no longer use. Lost configurations cannot be recovered because private keys are never retained.</p></div>{service?.endpoint && <div><span>Gateway</span><code>{service.endpoint}</code></div>}</div>
-      {!service ? <InlineLoading description="Loading connections" /> : service.connections.length === 0 ? <div className="tunnel-empty"><strong>No connections yet</strong><p>Create one above, then import the downloaded file in the WireGuard app.</p></div> : <div className="connection-list">{service.connections.map((connection) => <article key={connection.id}><div><strong>{connection.name}</strong><code>{connection.address}/128</code><span>Created {new Date(connection.createdAt).toLocaleDateString()}</span></div><Button hasIconOnly kind="ghost" size="sm" renderIcon={TrashCan} iconDescription={`Revoke ${connection.name}`} disabled={busy} onClick={() => revoke(connection)} /></article>)}</div>}
+      {!service ? <InlineLoading description="Loading connections" /> : service.connections.length === 0 ? <div className="tunnel-empty"><strong>No connections yet</strong><p>Create one above, then import the downloaded file in the WireGuard app.</p></div> : <div className="connection-list">{service.connections.map((connection) => <article key={connection.id}><div><strong>{connection.name}</strong><code>{connection.address}/128</code><span>Created {new Date(connection.createdAt).toLocaleDateString()}</span></div><Button kind="danger--ghost" size="sm" renderIcon={TrashCan} disabled={busy} onClick={() => revoke(connection)}>Revoke</Button></article>)}</div>}
     </section>
 
     <section className="tunnel-help"><h2>Connect in three steps</h2><ol><li><span>1</span><div><strong>Create</strong><p>Make one connection for each device.</p></div></li><li><span>2</span><div><strong>Import</strong><p>Open the downloaded file with WireGuard.</p></div></li><li><span>3</span><div><strong>Activate</strong><p>Enable the tunnel to route IPv6 internet traffic.</p></div></li></ol><p className="tunnel-note">This is an IPv6-only service. The assigned address is public; normal internet safety and acceptable-use expectations apply.</p></section>
