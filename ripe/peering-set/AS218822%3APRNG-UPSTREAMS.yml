@@ -32,6 +32,10 @@ objects:
         value: AS35708
       - name: mp-peering
         value: AS140961
+      - name: mp-peering
+        value: AS137933
+      - name: mp-peering
+        value: AS209762
       - link:
           href: https://rest.db.ripe.net/ripe/organisation/ORG-PMH3-RIPE
           type: locator
