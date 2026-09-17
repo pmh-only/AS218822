@@ -1,3 +1,4 @@
+id: 113204
 net_id: 43433
 ixlan_id: 2274
 notes: EVIX New Zealand GRETAP connection
@@ -8,3 +9,5 @@ ipaddr6: 2602:fed2:fff:ffff:6::11d
 is_rs_peer: true
 bfd_support: false
 operational: true
+net_side_id: null
+ix_side_id: null
