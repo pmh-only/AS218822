@@ -75,6 +75,7 @@ configure_gre() {
     remote_address=
     tunnel_addresses=
     mac_address=
+    tunnel_key=
     ttl=255
     mtu=
 
@@ -92,6 +93,7 @@ configure_gre() {
             remote) remote_address=$value ;;
             address) tunnel_addresses="$tunnel_addresses $value" ;;
             mac) mac_address=$value ;;
+            key) tunnel_key=$value ;;
             ttl) ttl=$value ;;
             mtu) mtu=$value ;;
             *)
@@ -117,6 +119,18 @@ configure_gre() {
         echo "GRE MAC address is only supported for gretap in $config" >&2
         exit 1
     fi
+    if [ -n "$tunnel_key" ]; then
+        case "$tunnel_key" in
+            *[!0-9]*)
+                echo "GRE key must be a decimal integer: $config" >&2
+                exit 1
+                ;;
+        esac
+        if [ "$tunnel_key" -gt 4294967295 ]; then
+            echo "GRE key exceeds 32 bits: $config" >&2
+            exit 1
+        fi
+    fi
     [ "${BIRD_VALIDATE:-0}" = 1 ] && return
 
     # A SIGKILL can leave our named tunnel behind in a host network namespace.
@@ -131,8 +145,13 @@ configure_gre() {
         esac
         ip link delete "$interface"
     fi
-    ip link add "$interface" type "$type" \
-        local "$local_address" remote "$remote_address" "$ttl_option" "$ttl"
+    if [ -n "$tunnel_key" ]; then
+        ip link add "$interface" type "$type" \
+            local "$local_address" remote "$remote_address" key "$tunnel_key" "$ttl_option" "$ttl"
+    else
+        ip link add "$interface" type "$type" \
+            local "$local_address" remote "$remote_address" "$ttl_option" "$ttl"
+    fi
     gre_interfaces="$interface $gre_interfaces"
     if [ -n "$mac_address" ]; then
         ip link set dev "$interface" address "$mac_address"
