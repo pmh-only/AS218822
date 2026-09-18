@@ -52,15 +52,15 @@ render_templates() {
 }
 
 validate_interface_name() {
-    interface=$1
-    case "$interface" in
+    validated_interface=$1
+    case "$validated_interface" in
         ''|*[!a-zA-Z0-9_.-]*)
-            echo "Invalid tunnel interface name: $interface" >&2
+            echo "Invalid tunnel interface name: $validated_interface" >&2
             exit 1
             ;;
     esac
-    if [ "${#interface}" -gt 15 ]; then
-        echo "Tunnel interface name exceeds 15 characters: $interface" >&2
+    if [ "${#validated_interface}" -gt 15 ]; then
+        echo "Tunnel interface name exceeds 15 characters: $validated_interface" >&2
         exit 1
     fi
 }
