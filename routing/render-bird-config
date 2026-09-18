@@ -158,6 +158,9 @@ configure_gre() {
         existing_type=$(ip -d -j link show dev "$interface")
         case "$existing_type" in
             *\"info_kind\":\"$type\"*) ;;
+            *\"info_kind\":\"gre\"*|*\"info_kind\":\"gretap\"*|*\"info_kind\":\"ip6gre\"*|*\"info_kind\":\"vxlan\"*)
+                echo "Replacing managed tunnel $interface with type $type" >&2
+                ;;
             *)
                 echo "Refusing to replace non-$type interface: $interface" >&2
                 exit 1
