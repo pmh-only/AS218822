@@ -75,6 +75,9 @@ configure_gre() {
     remote_address=
     tunnel_addresses=
     mac_address=
+    tunnel_id=
+    destination_port=
+    underlay_device=
     ttl=255
     mtu=
 
@@ -92,6 +95,9 @@ configure_gre() {
             remote) remote_address=$value ;;
             address) tunnel_addresses="$tunnel_addresses $value" ;;
             mac) mac_address=$value ;;
+            id) tunnel_id=$value ;;
+            dstport) destination_port=$value ;;
+            dev) underlay_device=$value ;;
             ttl) ttl=$value ;;
             mtu) mtu=$value ;;
             *)
@@ -102,10 +108,10 @@ configure_gre() {
     done < "$config"
 
     case "$type" in
-        gre|gretap) ttl_option=ttl ;;
+        gre|gretap|vxlan) ttl_option=ttl ;;
         ip6gre) ttl_option=hoplimit ;;
         *)
-            echo "GRE type must be gre, gretap, or ip6gre in $config" >&2
+            echo "Tunnel type must be gre, gretap, ip6gre, or vxlan in $config" >&2
             exit 1
             ;;
     esac
@@ -113,8 +119,36 @@ configure_gre() {
         echo "GRE local, remote, and address are required in $config" >&2
         exit 1
     fi
-    if [ -n "$mac_address" ] && [ "$type" != gretap ]; then
-        echo "GRE MAC address is only supported for gretap in $config" >&2
+    if [ -n "$mac_address" ] && [ "$type" != gretap ] && [ "$type" != vxlan ]; then
+        echo "Tunnel MAC address is only supported for gretap or vxlan in $config" >&2
+        exit 1
+    fi
+    if [ "$type" = vxlan ]; then
+        case "$tunnel_id" in
+            ''|*[!0-9]*)
+                echo "VXLAN id must be a decimal integer: $config" >&2
+                exit 1
+                ;;
+        esac
+        if [ "$tunnel_id" -gt 16777215 ]; then
+            echo "VXLAN id exceeds 24 bits: $config" >&2
+            exit 1
+        fi
+        case "$destination_port" in
+            ''|*[!0-9]*)
+                echo "VXLAN dstport must be a decimal integer: $config" >&2
+                exit 1
+                ;;
+        esac
+        if [ "$destination_port" -lt 1 ] || [ "$destination_port" -gt 65535 ]; then
+            echo "VXLAN dstport must be between 1 and 65535: $config" >&2
+            exit 1
+        fi
+        if [ -n "$underlay_device" ]; then
+            validate_interface_name "$underlay_device"
+        fi
+    elif [ -n "$tunnel_id" ] || [ -n "$destination_port" ] || [ -n "$underlay_device" ]; then
+        echo "Tunnel id, dstport, and dev are only supported for vxlan in $config" >&2
         exit 1
     fi
     [ "${BIRD_VALIDATE:-0}" = 1 ] && return
@@ -131,8 +165,20 @@ configure_gre() {
         esac
         ip link delete "$interface"
     fi
-    ip link add "$interface" type "$type" \
-        local "$local_address" remote "$remote_address" "$ttl_option" "$ttl"
+    if [ "$type" = vxlan ]; then
+        if [ -n "$underlay_device" ]; then
+            ip link add "$interface" type vxlan id "$tunnel_id" \
+                local "$local_address" remote "$remote_address" \
+                dstport "$destination_port" dev "$underlay_device" ttl "$ttl"
+        else
+            ip link add "$interface" type vxlan id "$tunnel_id" \
+                local "$local_address" remote "$remote_address" \
+                dstport "$destination_port" ttl "$ttl"
+        fi
+    else
+        ip link add "$interface" type "$type" \
+            local "$local_address" remote "$remote_address" "$ttl_option" "$ttl"
+    fi
     gre_interfaces="$interface $gre_interfaces"
     if [ -n "$mac_address" ]; then
         ip link set dev "$interface" address "$mac_address"
