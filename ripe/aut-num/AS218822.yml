@@ -111,7 +111,7 @@ objects:
       - name: mp-import
         value: afi ipv6.unicast from AS41051 accept ANY
       - name: mp-export
-        value: afi ipv6.unicast to AS41051 announce AS218822:AS-PMHONLY
+        value: afi ipv6.unicast to AS41051 announce AS218822
       - name: mp-import
         value: afi ipv6.unicast from AS201423 accept AS201423
       - name: mp-export
