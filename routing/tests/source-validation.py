@@ -94,7 +94,64 @@ def check_external_ingress(interface):
                    "2a0f:6284:b::1", "fd00:200:21:1::17"):
         expect(f"{interface}: preserve remote/cloud/customer/control source {source}",
                lambda: inject(interface, source, "2a06:9801:ff0::"),
-               "delivered", "test_observer")
+                "delivered", "test_observer")
+
+
+def check_anycast_return(interface, mark, forwarded=False):
+    endpoint = "2a06:9801:ff0::"
+    remote = f"2001:db8::{mark}"
+    table = str(218000 + mark)
+    run("ip", "-6", "route", "add", remote + "/128", "dev", "uplink")
+    run("ip", "-6", "route", "add", remote + "/128", "dev", interface, "table", table)
+    run("ip", "-6", "rule", "add", "pref", "9000", "fwmark", str(mark), "lookup", table)
+    run("ip", "-6", "neigh", "replace", remote, "lladdr", "02:00:00:00:00:03", "dev", interface, "nud", "permanent")
+    nft(f'add rule inet as218822_sav anycast_ingress iifname "{interface}" ct mark set {mark}')
+    nft(f"""
+    table inet test_anycast {{
+        counter request_marked {{ }}
+        counter reply_routed {{ }}
+        chain request {{
+            type filter hook prerouting priority 0; policy accept;
+            ip6 saddr {remote} icmpv6 type echo-request ct mark {mark} counter name request_marked
+        }}
+        chain reply {{
+            type filter hook postrouting priority 120; policy accept;
+            ip6 daddr {remote} icmpv6 type echo-reply oifname "{interface}" meta mark {mark} ct mark {mark} counter name reply_routed
+        }}
+    }}
+    """)
+
+    def echo(source, destination, kind):
+        payload = struct.pack("!BBHHH", kind, 0, 0, mark, 1)
+        pseudo = ipaddress.ip_address(source).packed + ipaddress.ip_address(destination).packed
+        pseudo += struct.pack("!I3xB", len(payload), 58)
+        return payload[:2] + struct.pack("!H", checksum(pseudo + payload)) + payload[4:]
+
+    if forwarded:
+        run("ip", "-6", "address", "del", endpoint + "/128", "dev", "lo")
+        run("ip", "-6", "route", "add", endpoint + "/128", "dev", "core")
+        run("ip", "-6", "neigh", "replace", endpoint, "lladdr", "02:00:00:00:00:03", "dev", "core", "nud", "permanent")
+    expect(f"{interface}: anycast request saves ingress conntrack mark",
+           lambda: inject(interface, remote, endpoint, payload=echo(remote, endpoint, 128), protocol=58),
+           "request_marked", "test_anycast")
+    if forwarded:
+        expect(f"{interface}: forwarded anycast reply restores ingress route",
+               lambda: inject("core", endpoint, remote, payload=echo(endpoint, remote, 129), protocol=58),
+               "reply_routed", "test_anycast")
+        run("ip", "-6", "route", "del", endpoint + "/128", "dev", "core")
+        run("ip", "-6", "address", "add", endpoint + "/128", "dev", "lo", "nodad")
+    else:
+        for _ in range(100):
+            if counter("reply_routed", "test_anycast") == 1:
+                break
+            time.sleep(0.01)
+        assert counter("reply_routed", "test_anycast") == 1, "local anycast reply did not use ingress route"
+        print(f"PASS {interface}: local anycast reply restores ingress route", flush=True)
+    run("ip", "-6", "rule", "del", "pref", "9000")
+    run("ip", "-6", "route", "flush", "table", table)
+    run("ip", "-6", "route", "del", remote + "/128", "dev", "uplink")
+    nft("delete table inet test_anycast")
+    nft("flush chain inet as218822_sav anycast_ingress")
 
 
 # Refuse accidental execution on an operator's host or a networked container.
@@ -151,6 +208,7 @@ run("ip", "-6", "route", "add", "2606:4700::1111/128", "dev", "bgptunnel-es")
 run("ip", "route", "add", "198.51.100.1/32", "dev", "bgptunnel-es")
 
 load("/routing/bird/source-validation.nft")
+check_anycast_return("bgptunnel-es", 831)
 check_external_ingress("bgptunnel-es")
 check_external_ingress("zt-test")
 expect("own source forwarded", lambda: inject("client", "2a06:9801:ff0::2", "2606:4700::1111"), "egress_valid")
@@ -200,6 +258,7 @@ with socket.socket(socket.AF_INET6, socket.SOCK_DGRAM) as sender:
     expect("kernel-generated neighbor discovery", lambda: sender.sendto(b"test", ("2a0e:8f01:1000:16::1", 54321)), "neighbor_discovery", "test_observer")
 
 load("/routing/edge/gre-gateway/bird/source-validation.nft")
+check_anycast_return("hkix-gretap", 841, forwarded=True)
 run("ip", "-6", "route", "replace", "2606:4700::1111/128", "dev", "hkix-gretap")
 expect("portal assigned source reaches the Internet", lambda: inject("portal", "2a06:9801:ff0:200::82", "2606:4700::1111"), "egress_valid")
 expect("portal spoofed source rejected", lambda: inject("portal", "2001:db8::82", "2606:4700::1111"), "ingress_spoof")

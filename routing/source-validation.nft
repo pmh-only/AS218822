@@ -5,12 +5,13 @@
 chain anycast_ingress {
 }
 chain anycast_mark {
-    type filter hook prerouting priority -310; policy accept;
+    # Conntrack attaches packets at -200; marks require that association first.
+    type filter hook prerouting priority mangle; policy accept;
     ip6 daddr 2a06:9801:ff0:: icmpv6 type echo-request jump anycast_ingress
     ip6 saddr 2a06:9801:ff0:: icmpv6 type echo-reply meta mark set ct mark
 }
 chain anycast_return {
-    type route hook output priority -200; policy accept;
+    type route hook output priority mangle; policy accept;
     ip6 saddr 2a06:9801:ff0:: icmpv6 type echo-reply meta mark set ct mark
 }
 
