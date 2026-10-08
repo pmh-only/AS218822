@@ -191,7 +191,7 @@ for interface in ("client", "lunalight", "tailscale0", "core", "portal"):
         run("ip", "link", "set", side, "up")
     run("ip", "-6", "address", "add", "fd00:ffff::1/128", "dev", interface, "nodad")
 
-for interface in ("4ixp", "bgptunnel-es", "zt-test", "hkix-gretap", "p7ix-342", "zxix", "enp1s0", "uplink"):
+for interface in ("4ixp", "bgptunnel-es", "zt-test", "hkix-gretap", "jsmsr", "p7ix-342", "zxix", "enp1s0", "uplink"):
     if interface != "uplink":
         run("ip", "link", "add", interface, "type", "veth", "peer", "name", "p-" + interface)
         run("ip", "link", "set", "p-" + interface, "addrgenmode", "none")
@@ -266,6 +266,11 @@ expect("portal cannot access the router", lambda: inject("portal", "2a06:9801:ff
 check_external_ingress("hkix-gretap")
 check_external_ingress("p7ix-342")
 check_external_ingress("zxix")
+check_external_ingress("jsmsr")
+run("ip", "-6", "route", "replace", "2606:4700::1111/128", "dev", "jsmsr")
+expect("JSMSR local peering source", lambda: local("2602:f919:90f:fffa::2188:22", "2606:4700::1111"), "egress_valid")
+expect("JSMSR external egress validated", lambda: inject("client", "2001:4860::bad", "2606:4700::1111"), "egress_spoof")
+expect("JSMSR transport source cannot be forwarded", lambda: inject("client", "2602:f919:90f:fffa::2188:22", "2606:4700::1111"), "egress_spoof")
 run("ip", "-6", "route", "replace", "2606:4700::1111/128", "dev", "4ixp")
 expect("4IXP local peering source", lambda: local("2001:7f8:d0::3:56c6:1", "2606:4700::1111"), "egress_valid")
 run("ip", "-6", "route", "replace", "2606:4700::1111/128", "dev", "p7ix-342")
