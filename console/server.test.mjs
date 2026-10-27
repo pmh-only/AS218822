@@ -95,6 +95,11 @@ test("operator data requires a valid session even after its cache has been popul
     assert.equal((await fetch(`${url}/api/operator`, { headers: { cookie: regularCookie } })).status, 403);
     const regularAuth = await (await fetch(`${url}/api/auth`, { headers: { cookie: regularCookie } })).json();
     assert.equal(regularAuth.user.operator, false);
+    for (const path of ["/operator", "/operator/", "/operator/index.html"]) {
+      const page = await fetch(`${url}${path}`, { headers: { cookie: regularCookie }, redirect: "manual" });
+      assert.equal(page.status, 302);
+      assert.equal(page.headers.get("location"), "/tunnels");
+    }
     assert.equal((await fetch(`${url}/api/status`, { headers: { cookie: regularCookie } })).status, 200);
   }
   assert.equal((await fetch(`${url}/api/operator`)).status, 401);

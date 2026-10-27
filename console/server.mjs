@@ -93,6 +93,10 @@ const server = createServer(async (request, response) => {
     }
   }
   if (request.method !== "GET") return respond(response, 405, "Method not allowed\n", { allow: "GET", "content-type": "text/plain; charset=utf-8" });
+  if (["/operator", "/operator/", "/operator/index.html"].includes(url.pathname)) {
+    const user = await auth.session(request);
+    if (user && user.operator !== true) return respond(response, 302, "", { location: "/tunnels" });
+  }
   if (request.url === "/healthz") return respond(response, 200, "ok\n", { "content-type": "text/plain; charset=utf-8" });
   if (url.pathname === "/api/auth") {
     const user = await auth.session(request);

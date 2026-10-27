@@ -107,7 +107,8 @@ export default function Dashboard({ page = "overview" }) {
 
   const current = data?.range === range ? data : null;
   const sessionValid = auth?.user && new Date(auth.user.expiresAt).getTime() > clock;
-  const privateData = sessionValid && auth.user.operator && !signingOut && operator?.range === range ? operator : null;
+  const operatorSession = sessionValid && auth.user.operator === true;
+  const privateData = operatorSession && !signingOut && operator?.range === range ? operator : null;
   const age = current ? Math.max(0, (clock - new Date(current.generatedAt).getTime()) / 1000) : null;
   const stale = Boolean(error || (age !== null && age > 90));
   const privateStale = Boolean(operatorError || (privateData && clock - new Date(privateData.generatedAt).getTime() > 90000));
@@ -134,10 +135,10 @@ export default function Dashboard({ page = "overview" }) {
   const [title, description] = pages[page] ?? pages.overview;
 
   return <Theme theme="g100">
-    <Header aria-label="AS218822 network console"><SkipToContent /><HeaderName href="/" prefix="AS218822">Network console</HeaderName><div className="header-access"><Tag type={sessionValid ? "purple" : "gray"} size="sm">{sessionValid ? "Operator access" : "Public / read-only"}</Tag></div></Header>
+    <Header aria-label="AS218822 network console"><SkipToContent /><HeaderName href="/" prefix="AS218822">Network console</HeaderName><div className="header-access"><Tag type={operatorSession ? "purple" : "gray"} size="sm">{operatorSession ? "Operator access" : sessionValid ? "User access" : "Public / read-only"}</Tag></div></Header>
     <Content id="main-content" className="dashboard">
       <section className="dashboard-intro"><div><h1>{title}</h1><p>{description}</p></div><div className="snapshot-status" aria-live="polite"><Tag type={stale ? "red" : current ? "gray" : "gray"}>{stale ? "Stale snapshot" : current ? `Updated ${time(current.generatedAt)}` : loading ? "Connecting" : "Telemetry unavailable"}</Tag><span>{current ? `${duration(age)} ago` : "Waiting for monitoring data"}</span></div></section>
-      <div className="dashboard-toolbar"><nav aria-label="Console pages">{navigation.map(([id, href, name]) => <a href={href} key={id} aria-current={page === id ? "page" : undefined}>{name}</a>)}</nav><div className="telemetry-controls"><Select id="time-window" labelText="History window" hideLabel value={range} onChange={(event) => setRange(event.target.value)} size="sm"><SelectItem value="1h" text="Last 1 hour" /><SelectItem value="6h" text="Last 6 hours" /><SelectItem value="24h" text="Last 24 hours" /></Select><Toggle id="auto-refresh" size="sm" labelText="Automatic refresh" hideLabel toggled={autoRefresh} labelA="Paused" labelB="Every 30s" onToggle={setAutoRefresh} /><Button size="sm" kind="secondary" renderIcon={Renew} disabled={loading} onClick={() => setRefresh((value) => value + 1)}>{loading ? "Refreshing" : "Refresh"}</Button></div></div>
+      <div className="dashboard-toolbar"><nav aria-label="Console pages">{navigation.filter(([id]) => id !== "operator" || !sessionValid || operatorSession).map(([id, href, name]) => <a href={href} key={id} aria-current={page === id ? "page" : undefined}>{name}</a>)}</nav><div className="telemetry-controls"><Select id="time-window" labelText="History window" hideLabel value={range} onChange={(event) => setRange(event.target.value)} size="sm"><SelectItem value="1h" text="Last 1 hour" /><SelectItem value="6h" text="Last 6 hours" /><SelectItem value="24h" text="Last 24 hours" /></Select><Toggle id="auto-refresh" size="sm" labelText="Automatic refresh" hideLabel toggled={autoRefresh} labelA="Paused" labelB="Every 30s" onToggle={setAutoRefresh} /><Button size="sm" kind="secondary" renderIcon={Renew} disabled={loading} onClick={() => setRefresh((value) => value + 1)}>{loading ? "Refreshing" : "Refresh"}</Button></div></div>
 
       {error && <InlineNotification kind="error" lowContrast hideCloseButton title="Telemetry unavailable" subtitle={`${error} ${current ? "Showing the last successful snapshot, not live state." : "Use Refresh to try again."}`} />}
       {!error && stale && <InlineNotification kind="warning" lowContrast hideCloseButton title="This snapshot is out of date" subtitle="Refresh to see current state. Historical values below are retained for reference." />}
