@@ -71,7 +71,7 @@ export default function Dashboard({ page = "overview" }) {
       const privateRequest = get("/api/auth").then(async (session) => {
         if (disposed) return;
         setAuth(session);
-        if (!session.user || page !== "operator") { setOperator(null); setOperatorError(""); return; }
+        if (!session.user?.operator || page !== "operator") { setOperator(null); setOperatorError(""); return; }
         try {
           const body = await get(`/api/operator?range=${range}`);
           if (!disposed) { setOperator(body); setOperatorError(""); }
@@ -107,7 +107,7 @@ export default function Dashboard({ page = "overview" }) {
 
   const current = data?.range === range ? data : null;
   const sessionValid = auth?.user && new Date(auth.user.expiresAt).getTime() > clock;
-  const privateData = sessionValid && !signingOut && operator?.range === range ? operator : null;
+  const privateData = sessionValid && auth.user.operator && !signingOut && operator?.range === range ? operator : null;
   const age = current ? Math.max(0, (clock - new Date(current.generatedAt).getTime()) / 1000) : null;
   const stale = Boolean(error || (age !== null && age > 90));
   const privateStale = Boolean(operatorError || (privateData && clock - new Date(privateData.generatedAt).getTime() > 90000));
@@ -192,6 +192,7 @@ export default function Dashboard({ page = "overview" }) {
       {page === "operator" && <section aria-label="Operator diagnostics" className="dashboard-section dashboard-section--page"><div className="page-context"><Tag type={sessionValid ? "purple" : "gray"}>{sessionValid ? "Authenticated" : "Sign-in required"}</Tag></div>
         {authError && <InlineNotification kind="error" lowContrast hideCloseButton title="Operator sign-in" subtitle={authError} />}
         {operatorError && <InlineNotification kind="error" lowContrast hideCloseButton title="Operator telemetry unavailable" subtitle={operatorError} />}
+        {sessionValid && !auth.user.operator && <InlineNotification kind="info" lowContrast hideCloseButton title="Regular user access" subtitle="You can manage your own IP tunnels. Private infrastructure diagnostics require an operator role." />}
         {sessionValid ? <div className="operator-access"><div><strong>{auth.user.name}</strong><p>Session expires {time(auth.user.expiresAt)}. Private readings are not included in the public API.</p></div><Button size="sm" kind="tertiary" renderIcon={Logout} disabled={signingOut} onClick={logout}>{signingOut ? "Signing out" : "Sign out"}</Button></div> : <div className="operator-access"><div><h3>{auth?.enabled ? "Sign in to inspect infrastructure" : auth ? "Operator access is not configured" : "Checking operator access"}</h3><p>{auth?.enabled ? "Unlock container CPU and memory, restarts, node health, interfaces, storage, private addresses, and scrape diagnostics." : auth ? "Configure OIDC on the server to enable private diagnostics. They are never exposed anonymously." : "Public telemetry remains available while the session is checked."}</p></div>{auth?.enabled && <Button href="/auth/login" renderIcon={Login}>Sign in with OIDC</Button>}</div>}
         {auth?.user && !sessionValid && <InlineNotification kind="info" lowContrast hideCloseButton title="Your operator session has expired" subtitle="Private diagnostics have been hidden. Sign in again to continue." />}
         {privateStale && <InlineNotification kind="warning" lowContrast hideCloseButton title="Private snapshot is stale" subtitle="Refresh before interpreting these readings as current." />}

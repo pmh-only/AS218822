@@ -83,13 +83,20 @@ test("operator data requires a valid session even after its cache has been popul
   assert.equal((await fetch(`${url}/api/operator`)).status, 401);
   assert.equal(requests.length, count);
   const key = createHash("sha256").update(secret).digest();
-  const makeCookie = async (expiry) => `__Host-console_session=${await new EncryptJWT({ sub: "operator", name: "Operator", csrf: "test-csrf", purpose: "session" }).setProtectedHeader({ alg: "dir", enc: "A256GCM" }).setIssuer("https://issuer.example/").setAudience("console").setExpirationTime(expiry).encrypt(key)}`;
+  const makeCookie = async (expiry, operator = true) => `__Host-console_session=${await new EncryptJWT({ sub: "operator", name: "Operator", ...(operator === "legacy" ? {} : { operator }), csrf: "test-csrf", purpose: "session" }).setProtectedHeader({ alg: "dir", enc: "A256GCM" }).setIssuer("https://issuer.example/").setAudience("console").setExpirationTime(expiry).encrypt(key)}`;
   const cookie = await makeCookie("1h");
   const privateResponse = await fetch(`${url}/api/operator`, { headers: { cookie } });
   assert.equal(privateResponse.status, 200);
   const body = await privateResponse.json();
   assert.equal(body.metrics.podInfo.series[0].labels.node, "private-node");
   assert.doesNotMatch(JSON.stringify(body), /never-return-this/);
+  for (const role of [false, null, "legacy"]) {
+    const regularCookie = await makeCookie("1h", role);
+    assert.equal((await fetch(`${url}/api/operator`, { headers: { cookie: regularCookie } })).status, 403);
+    const regularAuth = await (await fetch(`${url}/api/auth`, { headers: { cookie: regularCookie } })).json();
+    assert.equal(regularAuth.user.operator, false);
+    assert.equal((await fetch(`${url}/api/status`, { headers: { cookie: regularCookie } })).status, 200);
+  }
   assert.equal((await fetch(`${url}/api/operator`)).status, 401);
   assert.equal((await fetch(`${url}/api/operator`, { headers: { cookie: `${cookie}tampered` } })).status, 401);
   assert.equal((await fetch(`${url}/api/operator`, { headers: { cookie: await makeCookie(Math.floor(Date.now() / 1000) - 1) } })).status, 401);

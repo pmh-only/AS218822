@@ -21,10 +21,12 @@ export function createAuth(env = process.env, discover = oidc.discovery) {
   }
   const subjects = list(env.OIDC_ALLOWED_SUBJECTS);
   const groups = list(env.OIDC_ALLOWED_GROUPS);
+  const operatorSubjects = list(env.OIDC_OPERATOR_SUBJECTS);
+  const operatorGroups = list(env.OIDC_OPERATOR_GROUPS);
   if (!subjects.length && !groups.length && env.OIDC_ALLOW_ANY_AUTHENTICATED !== "true") {
     throw new Error("Set OIDC_ALLOWED_SUBJECTS or OIDC_ALLOWED_GROUPS, or explicitly set OIDC_ALLOW_ANY_AUTHENTICATED=true");
   }
-  const scopes = env.OIDC_SCOPES ?? `openid profile email${groups.length ? " groups" : ""}`;
+  const scopes = env.OIDC_SCOPES ?? `openid profile email${groups.length || operatorGroups.length ? " groups" : ""}`;
   if (!scopes.split(/\s+/).includes("openid")) throw new Error("OIDC_SCOPES must include openid");
   const ttl = Number(env.OIDC_SESSION_TTL_SECONDS ?? 3600);
   if (!Number.isInteger(ttl) || ttl < 60 || ttl > 86400) throw new Error("OIDC_SESSION_TTL_SECONDS must be between 60 and 86400");
@@ -104,8 +106,10 @@ export function createAuth(env = process.env, discover = oidc.discovery) {
         const age = Math.min(ttl, Math.floor(claims.exp - Date.now() / 1000));
         if (age <= 0) throw new Error("Expired identity token");
         const name = String(claims.name ?? claims.preferred_username ?? claims.sub).slice(0, 160);
-        const value = await seal({ sub: claims.sub, name, csrf: token() }, "session", age);
-        respond(response, 302, "", { location: transaction.returnTo ?? "/operator", "set-cookie": [cookie("transaction", "", 0), cookie("session", value, age)] });
+        const operator = operatorSubjects.includes(claims.sub) || (Array.isArray(memberships) && operatorGroups.some((group) => memberships.includes(group)));
+        const value = await seal({ sub: claims.sub, name, operator, csrf: token() }, "session", age);
+        const returnTo = transaction.returnTo === "/operator" && !operator ? "/tunnels" : transaction.returnTo ?? "/tunnels";
+        respond(response, 302, "", { location: returnTo, "set-cookie": [cookie("transaction", "", 0), cookie("session", value, age)] });
       }
     } catch {
       // Provider responses and tokens can contain credentials; do not log them.

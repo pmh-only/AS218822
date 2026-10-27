@@ -19,6 +19,8 @@ public response, even when its caller is signed in.
 | `OIDC_ALLOWED_SUBJECTS` | unset | Comma-separated, case-sensitive allowed `sub` claims |
 | `OIDC_ALLOWED_GROUPS` | unset | Comma-separated, case-sensitive allowed group memberships |
 | `OIDC_GROUPS_CLAIM` | `groups` | Top-level array claim containing group memberships in the ID token |
+| `OIDC_OPERATOR_SUBJECTS` | unset | Explicit operator `sub` allowlist, separate from ordinary sign-in |
+| `OIDC_OPERATOR_GROUPS` | unset | Explicit operator groups matched against `OIDC_GROUPS_CLAIM` |
 | `OIDC_SCOPES` | `openid profile email` | Requested scopes; defaults also include `groups` when group rules are configured |
 | `OIDC_ALLOW_ANY_AUTHENTICATED` | `false` | Explicitly authorize every identity admitted to this OIDC client |
 | `OIDC_SESSION_TTL_SECONDS` | `3600` | Session lifetime, 60-86400 seconds, capped by the ID token's expiration |
@@ -43,6 +45,11 @@ required unless `OIDC_ALLOW_ANY_AUTHENTICATED=true` is explicitly chosen.
    Email addresses are not used as authorization identities.
 4. Deploy through GitOps and use **Sign in with OIDC** in the operator section.
    A provider account outside the allowlist is denied without receiving a session.
+5. Configure `OIDC_OPERATOR_SUBJECTS` or `OIDC_OPERATOR_GROUPS` separately for
+   private telemetry. Ordinary admitted users can manage only their own tunnels.
+   `OIDC_ALLOW_ANY_AUTHENTICATED=true` never grants operator access. With no
+   operator allowlist, every login is a regular-user login. Existing cookies
+   without an explicit operator flag are denied private telemetry.
 
 No provider credentials are bundled into the frontend, and this repository does
 not provision an identity provider or activate OIDC in production automatically.

@@ -96,11 +96,15 @@ const server = createServer(async (request, response) => {
   if (request.url === "/healthz") return respond(response, 200, "ok\n", { "content-type": "text/plain; charset=utf-8" });
   if (url.pathname === "/api/auth") {
     const user = await auth.session(request);
-    return respond(response, 200, JSON.stringify({ enabled: auth.enabled, user: user ? { name: user.name, expiresAt: new Date(user.exp * 1000).toISOString(), csrfToken: user.csrf } : null }), { "content-type": "application/json; charset=utf-8" });
+    return respond(response, 200, JSON.stringify({ enabled: auth.enabled, user: user ? { name: user.name, operator: user.operator === true, expiresAt: new Date(user.exp * 1000).toISOString(), csrfToken: user.csrf } : null }), { "content-type": "application/json; charset=utf-8" });
   }
   if (["/api/status", "/api/operator"].includes(url.pathname)) {
     const operator = url.pathname === "/api/operator";
-    if (operator && !await auth.session(request)) return respond(response, 401, JSON.stringify({ error: "Operator sign-in required" }), { "content-type": "application/json; charset=utf-8" });
+    if (operator) {
+      const user = await auth.session(request);
+      if (!user) return respond(response, 401, JSON.stringify({ error: "Operator sign-in required" }), { "content-type": "application/json; charset=utf-8" });
+      if (user.operator !== true) return respond(response, 403, JSON.stringify({ error: "Operator access required" }), { "content-type": "application/json; charset=utf-8" });
+    }
     const range = url.searchParams.get("range") ?? "6h";
     if (!Object.hasOwn(ranges, range) || [...url.searchParams.keys()].some((key) => key !== "range") || url.searchParams.getAll("range").length > 1) {
       return respond(response, 400, JSON.stringify({ error: "Choose a range of 1h, 6h, or 24h" }), { "content-type": "application/json; charset=utf-8" });

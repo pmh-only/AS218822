@@ -8,6 +8,7 @@ const env = {
   OIDC_ISSUER_URL: "https://issuer.example/", OIDC_CLIENT_ID: "console", OIDC_CLIENT_SECRET: "test-secret",
   OIDC_REDIRECT_URI: "https://console.example/auth/callback", OIDC_SESSION_SECRET: "test-only-secret-with-at-least-32-characters",
   OIDC_ALLOWED_GROUPS: "network-operators",
+  OIDC_OPERATOR_GROUPS: "network-operators",
 };
 
 test("OIDC configuration fails closed", () => {
@@ -47,7 +48,7 @@ test("real OIDC code flow checks PKCE, state, nonce, signature, issuer, expiry, 
     if (usedCodes.has(params.get("code"))) return Response.json({ error: "invalid_grant" }, { status: 400 });
     usedCodes.add(params.get("code"));
     const claims = {
-      sub: "operator", name: "Network Operator", groups: scenario === "denied" ? ["visitors"] : ["network-operators"],
+      sub: "operator", name: "Network Operator", groups: ["denied", "regular"].includes(scenario) ? ["visitors"] : ["network-operators"],
       nonce: scenario === "nonce" ? "wrong-nonce" : authorization.searchParams.get("nonce"),
     };
     const idToken = await new SignJWT(claims).setProtectedHeader({ alg: "RS256", kid: "test-key" })
@@ -57,7 +58,7 @@ test("real OIDC code flow checks PKCE, state, nonce, signature, issuer, expiry, 
       .sign(scenario === "signature" ? wrongKey : privateKey);
     return Response.json({ access_token: "never-send-this-to-the-browser", token_type: "Bearer", expires_in: 3600, id_token: idToken });
   };
-  const auth = createAuth(env, (issuer, id, secret, authentication, options) => oidc.discovery(issuer, id, secret, authentication, { ...options, [oidc.customFetch]: transport }));
+  let auth = createAuth(env, (issuer, id, secret, authentication, options) => oidc.discovery(issuer, id, secret, authentication, { ...options, [oidc.customFetch]: transport }));
   async function route(path, cookie = "", method = "GET") {
     const result = {};
     await auth.handle({ url: path, method, headers: { cookie, host: "evil.example" } }, {}, (_, status, body, headers) => Object.assign(result, { status, body, headers }), new URL(path, "https://console.example").pathname);
@@ -81,6 +82,7 @@ test("real OIDC code flow checks PKCE, state, nonce, signature, issuer, expiry, 
   assert.doesNotMatch(sessionCookie, /Network Operator|never-send-this/);
   const user = await auth.session({ headers: { cookie: sessionCookie } });
   assert.equal(user.name, "Network Operator");
+  assert.equal(user.operator, true);
   assert.ok(user.csrf);
   assert.equal(await auth.session({ headers: { cookie: `${sessionCookie}tampered` } }), null);
   response = await route(`/auth/callback?code=${state}&state=${state}`, transaction);
@@ -99,4 +101,19 @@ test("real OIDC code flow checks PKCE, state, nonce, signature, issuer, expiry, 
     assert.match(response.headers.location, scenario === "denied" ? /access_denied/ : /sign_in_failed/, scenario);
     assert.ok(response.headers["set-cookie"].every((cookie) => cookie.includes("Max-Age=0")));
   }
+  auth = createAuth({ ...env, OIDC_ALLOW_ANY_AUTHENTICATED: "true" }, (issuer, id, secret, authentication, options) => oidc.discovery(issuer, id, secret, authentication, { ...options, [oidc.customFetch]: transport }));
+  scenario = "regular";
+  transaction = await login();
+  const regularState = authorization.searchParams.get("state");
+  response = await route(`/auth/callback?code=${regularState}&state=${regularState}`, transaction);
+  assert.equal(response.headers.location, "/tunnels");
+  const regularCookie = response.headers["set-cookie"][1].split(";")[0];
+  assert.equal((await auth.session({ headers: { cookie: regularCookie } })).operator, false);
+  auth = createAuth({ ...env, OIDC_OPERATOR_GROUPS: "" }, (issuer, id, secret, authentication, options) => oidc.discovery(issuer, id, secret, authentication, { ...options, [oidc.customFetch]: transport }));
+  scenario = "valid";
+  transaction = await login();
+  const noRoleState = authorization.searchParams.get("state");
+  response = await route(`/auth/callback?code=${noRoleState}&state=${noRoleState}`, transaction);
+  assert.equal(response.headers.location, "/tunnels");
+  assert.equal((await auth.session({ headers: { cookie: response.headers["set-cookie"][1].split(";")[0] } })).operator, false);
 });
