@@ -50,7 +50,7 @@ def inject(interface, source, destination, **kwargs):
     family = b"\x86\xdd" if ":" in source else b"\x08\x00"
     frame = bytes.fromhex(mac.replace(":", "")) + b"\x02\0\0\0\0\x02" + family
     with socket.socket(socket.AF_PACKET, socket.SOCK_RAW) as sender:
-        sender.bind(("p-" + interface, 0))
+        sender.bind((("p-" + interface)[:15], 0))
         sender.send(frame + packet(source, destination, **kwargs))
 
 
@@ -191,12 +191,13 @@ for interface in ("client", "lunalight", "tailscale0", "core", "portal"):
         run("ip", "link", "set", side, "up")
     run("ip", "-6", "address", "add", "fd00:ffff::1/128", "dev", interface, "nodad")
 
-for interface in ("4ixp", "bgptunnel-es", "zt-test", "hkix-gretap", "jsmsr", "p7ix-342", "zxix", "enp1s0", "uplink"):
+for interface in ("4ixp", "bgptunnel-es", "zt-test", "freetransit-at", "hkix-gretap", "jsmsr", "p7ix-342", "zxix", "enp1s0", "uplink"):
     if interface != "uplink":
-        run("ip", "link", "add", interface, "type", "veth", "peer", "name", "p-" + interface)
-        run("ip", "link", "set", "p-" + interface, "addrgenmode", "none")
-        run("ip", "link", "set", "p-" + interface, "multicast", "off")
-        run("ip", "link", "set", "p-" + interface, "up")
+        peer = ("p-" + interface)[:15]
+        run("ip", "link", "add", interface, "type", "veth", "peer", "name", peer)
+        run("ip", "link", "set", peer, "addrgenmode", "none")
+        run("ip", "link", "set", peer, "multicast", "off")
+        run("ip", "link", "set", peer, "up")
     else:
         run("ip", "link", "add", interface, "type", "dummy")
     run("ip", "link", "set", interface, "addrgenmode", "none")
@@ -267,6 +268,11 @@ check_external_ingress("hkix-gretap")
 check_external_ingress("p7ix-342")
 check_external_ingress("zxix")
 check_external_ingress("jsmsr")
+check_external_ingress("freetransit-at")
+run("ip", "-6", "route", "replace", "2606:4700::1111/128", "dev", "freetransit-at")
+expect("FreeTransit AT local transport source", lambda: local("2a01:20e:1000:18b::2", "2606:4700::1111"), "egress_valid")
+expect("FreeTransit AT external egress validated", lambda: inject("client", "2001:4860::bad", "2606:4700::1111"), "egress_spoof")
+expect("FreeTransit AT transport source cannot be forwarded", lambda: inject("client", "2a01:20e:1000:18b::2", "2606:4700::1111"), "egress_spoof")
 run("ip", "-6", "route", "replace", "2606:4700::1111/128", "dev", "jsmsr")
 expect("JSMSR local peering source", lambda: local("2602:f919:90f:fffa::2188:22", "2606:4700::1111"), "egress_valid")
 expect("JSMSR external egress validated", lambda: inject("client", "2001:4860::bad", "2606:4700::1111"), "egress_spoof")
