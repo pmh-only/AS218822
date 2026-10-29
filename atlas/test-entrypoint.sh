@@ -20,4 +20,11 @@ case "${SSH_ADDRESS_FAMILY:-inet}" in
         ;;
 esac
 test -s /etc/ripe-atlas/probe_key.pub
+if [ "${SSH_CONTROL_UNDERLAY:-0}" = 1 ]; then
+    ssh -G reg-05.prod.atlas.ripe.net 2>/dev/null | grep -q '^proxycommand /usr/local/bin/atlas-control-proxy %h %p$'
+    if ssh -G 127.0.0.1 2>/dev/null | grep -q '^proxycommand /usr/local/bin/atlas-control-proxy'; then
+        echo 'Local reverse-tunnel connections must not use the control proxy' >&2
+        exit 1
+    fi
+fi
 printf 'Atlas bootstrap passed for %s\n' "${SSH_ADDRESS_FAMILY:-inet}"

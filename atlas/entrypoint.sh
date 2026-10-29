@@ -9,6 +9,23 @@ case "${SSH_ADDRESS_FAMILY:-inet}" in
         ;;
 esac
 ssh_address_family="${SSH_ADDRESS_FAMILY:-inet}"
+case "${SSH_CONTROL_UNDERLAY:-0}" in
+    0) ;;
+    1)
+        [ "$ssh_address_family" = inet ] || {
+            echo 'SSH_CONTROL_UNDERLAY requires SSH_ADDRESS_FAMILY=inet' >&2
+            exit 1
+        }
+        # Exempt the controller's reverse-tunnel connection to the local probe.
+        cat >> /etc/ssh/ssh_config.d/ripe-atlas.conf <<'EOF'
+Host localhost 127.0.0.1 ::1
+    ProxyCommand none
+Host *
+    ProxyCommand /usr/local/bin/atlas-control-proxy %h %p
+EOF
+        ;;
+    *) echo 'Invalid SSH_CONTROL_UNDERLAY' >&2; exit 1 ;;
+esac
 if [ "$ssh_address_family" = inet6 ]; then
     # The controller connects back to the probe through 127.0.0.1:2023.
     ssh_address_family=any
