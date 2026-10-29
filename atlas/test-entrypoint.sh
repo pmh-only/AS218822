@@ -27,4 +27,20 @@ if [ "${SSH_CONTROL_UNDERLAY:-0}" = 1 ]; then
         exit 1
     fi
 fi
+if [ "${SSH_CONTROL_UNDERLAY:-0}" = registration ]; then
+    [ "$REG_3_HOST" = "$REG_1_HOST" ]
+    [ "$REG_6_HOST" = "$REG_4_HOST" ]
+    for host in "$REG_1_HOST" "$REG_4_HOST" 193.0.19.75 193.0.19.76; do
+        ssh -G "$host" 2>/dev/null | grep -q '^addressfamily inet$'
+        ssh -G "$host" 2>/dev/null | grep -q '^proxycommand /usr/local/bin/atlas-control-proxy %h %p$'
+    done
+    for host in ctr-dub-sw01.atlas.prod.ripe.net 2a13:27c0:1c:d00:26d6:fe95:acb7:2e9a; do
+        ssh -G "$host" 2>/dev/null | grep -q '^addressfamily inet6$'
+        if ssh -G "$host" 2>/dev/null | grep -q '^proxycommand /usr/local/bin/atlas-control-proxy'; then
+            echo 'Controller must use native IPv6, not the OCI control proxy' >&2
+            exit 1
+        fi
+    done
+    ssh -G 127.0.0.1 2>/dev/null | grep -q '^addressfamily any$'
+fi
 printf 'Atlas bootstrap passed for %s\n' "${SSH_ADDRESS_FAMILY:-inet}"

@@ -9,10 +9,15 @@ case "${SSH_ADDRESS_FAMILY:-inet}" in
         ;;
 esac
 ssh_address_family="${SSH_ADDRESS_FAMILY:-inet}"
+if [ "$ssh_address_family" = inet6 ]; then
+    # The controller connects back to the probe through 127.0.0.1:2023.
+    ssh_address_family=any
+fi
+sed -i "s/AddressFamily .*/AddressFamily ${ssh_address_family}/" /etc/ssh/ssh_config.d/ripe-atlas.conf
 case "${SSH_CONTROL_UNDERLAY:-0}" in
     0) ;;
     1)
-        [ "$ssh_address_family" = inet ] || {
+        [ "${SSH_ADDRESS_FAMILY:-inet}" = inet ] || {
             echo 'SSH_CONTROL_UNDERLAY requires SSH_ADDRESS_FAMILY=inet' >&2
             exit 1
         }
@@ -24,13 +29,30 @@ Host *
     ProxyCommand /usr/local/bin/atlas-control-proxy %h %p
 EOF
         ;;
+    registration)
+        [ "${SSH_ADDRESS_FAMILY:-inet}" = inet6 ] || {
+            echo 'Registration-only underlay requires SSH_ADDRESS_FAMILY=inet6' >&2
+            exit 1
+        }
+        # OpenSSH takes the first matching value. Only bootstrap registration
+        # may use OCI IPv4; controller INIT/KEEP must expose our public IPv6.
+        cp /etc/ssh/ssh_config.d/ripe-atlas.conf /etc/ssh/ssh_config.d/ripe-atlas.conf.base
+        cat > /etc/ssh/ssh_config.d/ripe-atlas.conf <<'EOF'
+Host localhost 127.0.0.1 ::1
+    AddressFamily any
+    ProxyCommand none
+Host reg-*.prod.atlas.ripe.net 193.0.19.75 193.0.19.76
+    AddressFamily inet
+    ProxyCommand /usr/local/bin/atlas-control-proxy %h %p
+Host *
+    AddressFamily inet6
+    ProxyCommand none
+EOF
+        cat /etc/ssh/ssh_config.d/ripe-atlas.conf.base >> /etc/ssh/ssh_config.d/ripe-atlas.conf
+        rm /etc/ssh/ssh_config.d/ripe-atlas.conf.base
+        ;;
     *) echo 'Invalid SSH_CONTROL_UNDERLAY' >&2; exit 1 ;;
 esac
-if [ "$ssh_address_family" = inet6 ]; then
-    # The controller connects back to the probe through 127.0.0.1:2023.
-    ssh_address_family=any
-fi
-sed -i "s/AddressFamily .*/AddressFamily ${ssh_address_family}/" /etc/ssh/ssh_config.d/ripe-atlas.conf
 
 if [ -n "${WAIT_FOR_INTERFACE:-}" ]; then
     until ip -6 route get 2606:4700:4700::1111 2>/dev/null | grep -q "dev ${WAIT_FOR_INTERFACE}"; do
@@ -48,6 +70,12 @@ case "${SSH_ADDRESS_FAMILY:-inet}" in
     inet) REG_3_HOST=$REG_1_HOST; REG_6_HOST=$REG_4_HOST ;;
     inet6) REG_2_HOST=$REG_1_HOST; REG_5_HOST=$REG_4_HOST ;;
 esac
+if [ "${SSH_CONTROL_UNDERLAY:-0}" = registration ]; then
+    # Do not randomly select literal IPv6 registration addresses that bypass
+    # the deliberately narrow Host block above.
+    REG_2_HOST=$REG_1_HOST; REG_3_HOST=$REG_1_HOST
+    REG_5_HOST=$REG_4_HOST; REG_6_HOST=$REG_4_HOST
+fi
 printf 'REG_1_HOST=%s\nREG_2_HOST=%s\nREG_3_HOST=%s\nREG_4_HOST=%s\nREG_5_HOST=%s\nREG_6_HOST=%s\n' \
     "$REG_1_HOST" "$REG_2_HOST" "$REG_3_HOST" "$REG_4_HOST" "$REG_5_HOST" "$REG_6_HOST" \
     > /etc/ripe-atlas/reg_servers.sh

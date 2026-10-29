@@ -169,6 +169,10 @@ jobs:
           docker run --rm --network none --entrypoint perl \
             --volume "$PWD/atlas/test-control-proxy.pl:/test-control-proxy.pl:ro" \
             "$image" /test-control-proxy.pl
+          docker run --rm --network none --entrypoint sh \
+            --env SSH_ADDRESS_FAMILY=inet6 --env SSH_CONTROL_UNDERLAY=registration \
+            --volume "$PWD/atlas/test-entrypoint.sh:/test-entrypoint.sh:ro" \
+            "$image" /test-entrypoint.sh
 
       - name: Export image digest
         if: github.event_name != 'pull_request'
