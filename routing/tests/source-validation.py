@@ -191,7 +191,7 @@ for interface in ("client", "lunalight", "tailscale0", "core", "portal"):
         run("ip", "link", "set", side, "up")
     run("ip", "-6", "address", "add", "fd00:ffff::1/128", "dev", interface, "nodad")
 
-for interface in ("4ixp", "bgptunnel-es", "zt-test", "freetransit-at", "hkix-gretap", "jsmsr", "p7ix-342", "zxix", "enp1s0", "uplink"):
+for interface in ("4ixp", "bgptunnel-es", "zt-test", "freetransit-at", "hkix-gretap", "ixfabric_jp", "jsmsr", "p7ix-342", "zxix", "enp1s0", "uplink"):
     if interface != "uplink":
         peer = ("p-" + interface)[:15]
         run("ip", "link", "add", interface, "type", "veth", "peer", "name", peer)
@@ -265,6 +265,7 @@ expect("portal assigned source reaches the Internet", lambda: inject("portal", "
 expect("portal spoofed source rejected", lambda: inject("portal", "2001:db8::82", "2606:4700::1111"), "ingress_spoof")
 expect("portal cannot access the router", lambda: inject("portal", "2a06:9801:ff0:200::82", "fd00:ffff::1"), "portal_denied")
 check_external_ingress("hkix-gretap")
+check_external_ingress("ixfabric_jp")
 check_external_ingress("p7ix-342")
 check_external_ingress("zxix")
 check_external_ingress("jsmsr")
@@ -283,6 +284,10 @@ run("ip", "-6", "route", "replace", "2606:4700::1111/128", "dev", "p7ix-342")
 expect("P7IX local peering source", lambda: local("2602:f92a:1315:3::28", "2606:4700::1111"), "egress_valid")
 run("ip", "-6", "route", "replace", "2606:4700::1111/128", "dev", "zxix")
 expect("ZXIX local peering source", lambda: local("2406:840:1f:1000::21:8822:1", "2606:4700::1111"), "egress_valid")
+run("ip", "-6", "route", "replace", "2606:4700::1111/128", "dev", "ixfabric_jp")
+expect("ixFabric JP local peering source", lambda: local("2a0e:8f01:1000:9::12d", "2606:4700::1111"), "egress_valid")
+expect("ixFabric JP external egress validated", lambda: inject("client", "2001:4860::bad", "2606:4700::1111"), "egress_spoof")
+expect("ixFabric JP peering source cannot be forwarded", lambda: inject("client", "2a0e:8f01:1000:9::12d", "2606:4700::1111"), "egress_spoof")
 expect("GRE accepts local infrastructure from authenticated backbone",
        lambda: inject("core", "2a06:9801:ff0:200::1", "2a06:9801:ff0::"),
        "delivered", "test_observer")
