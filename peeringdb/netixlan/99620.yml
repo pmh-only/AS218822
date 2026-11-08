@@ -1,9 +1,9 @@
 id: 99620
 net_id: 43433
-asn: 218822
 ixlan_id: 3822
 notes: ixFabric Amsterdam GRETAP connection
 speed: 1000
+asn: 218822
 ipaddr4: null
 ipaddr6: 2a0e:8f01:1000:11::1c4
 is_rs_peer: true
