@@ -1,5 +1,5 @@
 define local6 = { 2a06:9801:ff0::/44, fd00:218:822:100::1, fd00:218:822:2014:23:: }
-define upstreams = { "4ixp", "evix-nz", "freetransit-at", "hkix-gretap", "ixfabric_jp", "ixfabric_nl", "ixfabric_nz", "ixfabric_tw", "jsmsr", "lagrange", "p7ix-342", "tun10002", "tun10012", "zxix" }
+define upstreams = { "4ixp", "evix-nz", "freetransit-at", "hkix-gretap", "ixfabric_de", "ixfabric_jp", "ixfabric_nl", "ixfabric_nz", "ixfabric_tw", "jsmsr", "lagrange", "p7ix-342", "tun10002", "tun10012", "zxix" }
 
 add table inet as218822_sav
 delete table inet as218822_sav
@@ -12,12 +12,12 @@ table inet as218822_sav {
             fd:e82c::2, 2a01:20e:1000:117::2, 2a01:20e:1000:124::2,
             2a01:20e:1000:18b::2, 2a0e:8f01:1000:9::12d,
             2a0e:8f01:1000:11::1c4, 2a0e:8f01:1000:20::10e,
-            2a0e:8f01:1000:78::105 }
+            2a0e:8f01:1000:24::12a, 2a0e:8f01:1000:78::105 }
     }
     set transport4 {
         type ipv4_addr
         elements = { 10.156.73.181, 10.156.74.40, 10.255.101.192, 10.144.55.2,
-            100.66.33.45, 100.66.41.43, 100.66.77.14, 100.67.53.5 }
+            100.66.33.45, 100.66.41.43, 100.66.77.14, 100.66.93.24, 100.67.53.5 }
     }
 
     include "/etc/bird-source-validation.nft"
