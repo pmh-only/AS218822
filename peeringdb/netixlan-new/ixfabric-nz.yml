@@ -1,0 +1,10 @@
+net_id: 43433
+asn: 218822
+ixlan_id: 3827
+notes: ixFabric Auckland GRETAP connection
+speed: 1000
+ipaddr4: null
+ipaddr6: 2a0e:8f01:1000:20::10e
+is_rs_peer: true
+bfd_support: false
+operational: true
