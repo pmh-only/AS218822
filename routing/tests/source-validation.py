@@ -254,9 +254,9 @@ assert counter("egress_spoof") == before, "MLD membership report was dropped"
 local("fe80::1", "ff02::16", interface="zt-test", payload=b"\x8f" + b"\0" * 7, protocol=58, hops=64)
 assert counter("egress_spoof") == before + 1, "non-link-local MLD hop limit was allowed"
 print("PASS scoped multicast listener discovery", flush=True)
-run("ip", "-6", "address", "add", "2a0e:8f01:1000:16::157/64", "dev", "zt-test", "nodad")
+run("ip", "-6", "address", "add", "2a06:9801:ff0:ffff::1/64", "dev", "zt-test", "nodad")
 with socket.socket(socket.AF_INET6, socket.SOCK_DGRAM) as sender:
-    expect("kernel-generated neighbor discovery", lambda: sender.sendto(b"test", ("2a0e:8f01:1000:16::1", 54321)), "neighbor_discovery", "test_observer")
+    expect("kernel-generated neighbor discovery", lambda: sender.sendto(b"test", ("2a06:9801:ff0:ffff::2", 54321)), "neighbor_discovery", "test_observer")
 
 load("/routing/edge/gre-gateway/bird/source-validation.nft")
 check_anycast_return("hkix-gretap", 841, forwarded=True)
