@@ -191,7 +191,7 @@ for interface in ("client", "lunalight", "tailscale0", "core", "portal"):
         run("ip", "link", "set", side, "up")
     run("ip", "-6", "address", "add", "fd00:ffff::1/128", "dev", interface, "nodad")
 
-for interface in ("4ixp", "bgptunnel-es", "zt-test", "freetransit-at", "hkix-gretap", "ixfabric_de", "ixfabric_dus", "ixfabric_jp", "ixfabric_lyon", "ixfabric_mia", "ixfabric_nl", "ixfabric_nz", "ixfabric_rome", "ixfabric_tw", "jsmsr", "p7ix-342", "zxix", "enp1s0", "uplink"):
+for interface in ("4ixp", "bgptunnel-es", "zt-test", "freetransit-at", "hkix-gretap", "ixfabric_br", "ixfabric_de", "ixfabric_dus", "ixfabric_jp", "ixfabric_lyon", "ixfabric_mia", "ixfabric_nl", "ixfabric_nz", "ixfabric_rome", "ixfabric_tw", "jsmsr", "p7ix-342", "zxix", "enp1s0", "uplink"):
     if interface != "uplink":
         peer = ("p-" + interface)[:15]
         run("ip", "link", "add", interface, "type", "veth", "peer", "name", peer)
@@ -265,7 +265,7 @@ expect("portal assigned source reaches the Internet", lambda: inject("portal", "
 expect("portal spoofed source rejected", lambda: inject("portal", "2001:db8::82", "2606:4700::1111"), "ingress_spoof")
 expect("portal cannot access the router", lambda: inject("portal", "2a06:9801:ff0:200::82", "fd00:ffff::1"), "portal_denied")
 check_external_ingress("hkix-gretap")
-for interface in ("ixfabric_de", "ixfabric_dus", "ixfabric_jp", "ixfabric_lyon", "ixfabric_mia", "ixfabric_nl", "ixfabric_nz", "ixfabric_rome", "ixfabric_tw"):
+for interface in ("ixfabric_br", "ixfabric_de", "ixfabric_dus", "ixfabric_jp", "ixfabric_lyon", "ixfabric_mia", "ixfabric_nl", "ixfabric_nz", "ixfabric_rome", "ixfabric_tw"):
     check_external_ingress(interface)
 check_external_ingress("p7ix-342")
 check_external_ingress("zxix")
@@ -286,6 +286,7 @@ expect("P7IX local peering source", lambda: local("2602:f92a:1315:3::28", "2606:
 run("ip", "-6", "route", "replace", "2606:4700::1111/128", "dev", "zxix")
 expect("ZXIX local peering source", lambda: local("2406:840:1f:1000::21:8822:1", "2606:4700::1111"), "egress_valid")
 for interface, source in (
+    ("ixfabric_br", "2a0e:8f01:1000:19::10e"),
     ("ixfabric_de", "2a0e:8f01:1000:24::12a"),
     ("ixfabric_dus", "2a0e:8f01:1000:46::107"),
     ("ixfabric_jp", "2a0e:8f01:1000:9::12d"),
